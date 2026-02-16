@@ -49,14 +49,15 @@ void loop(){
     // Information from the readBpm function will be saved to our "body"
     // variable.  
     body = bioHub.readBpm();
-    Serial.print("Heartrate: ");
-    Serial.println(body.heartRate); 
-    Serial.print("Confidence: ");
-    Serial.println(body.confidence); 
-    Serial.print("Oxygen: ");
-    Serial.println(body.oxygen); 
-    Serial.print("Status: ");
+  
+    Serial.print(body.heartrate: );
+    Serial.println(","); 
+    Serial.print(body.oxygen);
+    Serial.print(",");
+    Serial.print(body.confidence);
+    Serial.print(","); 
     Serial.println(body.status); 
+    Serial.println();
     // tone(BUZZER, 85);
     delay(250); // Slowing it down, we don't need to break our necks here.
 }
