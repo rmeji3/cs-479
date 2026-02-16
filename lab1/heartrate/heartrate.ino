@@ -50,7 +50,7 @@ void loop(){
     // variable.  
     body = bioHub.readBpm();
   
-    Serial.print(body.heartrate: );
+    Serial.print(body.heartrate);
     Serial.println(","); 
     Serial.print(body.oxygen);
     Serial.print(",");
