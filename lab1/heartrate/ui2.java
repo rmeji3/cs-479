@@ -21,18 +21,21 @@ float[] oPlot = new float[N];
 XYChart chartH, chartC, chartO;
 
 // Y range tracking
-float yMin = 0, yMax = 1023;
+float yMin = 0, yMax = 250;
 
 void setup() {
   size(900, 460);
   surface.setTitle("Serial Multi Graph — HeartRate / Confidence / Oxygen");
 
-  println("Ports: ", Serial.list());
-  if (Serial.list().length > 0) {
-    String portName = Serial.list()[0];
-    port = new Serial(this, portName, 115200);
-    port.clear();
+  println(java.util.Arrays.toString(Serial.list()));
+  String portName = null;
+  for (String s : Serial.list()) {
+    if (s.toLowerCase().contains("usb") || s.toLowerCase().contains("com")) {
+      portName = s;
+    }
   }
+println("Using port:", portName);
+port = new Serial(this, portName, 115200);
 
   // x domain 0..N-1
   for (int i = 0; i < N; i++) xPlot[i] = i;
