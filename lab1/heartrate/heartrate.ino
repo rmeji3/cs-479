@@ -1,5 +1,14 @@
 #include <SparkFun_Bio_Sensor_Hub_Library.h>
 #include <Wire.h>
+// testing times
+unsigned long startMillis;
+unsigned long currentMillis;
+unsigned long period = 4000;  //the value is a number of milliseconds
+int fakeHR = 40;
+int count = 0;
+int num = 20;
+
+bool testHR = false;
 
 // No other Address options.
 #define DEF_ADDR 0x55
@@ -18,6 +27,7 @@ bioData body;
 void setup(){
 
   Serial.begin(115200);
+  startMillis = millis();
   pinMode(BUZZER, OUTPUT);
 
   
@@ -49,15 +59,32 @@ void loop(){
     // Information from the readBpm function will be saved to our "body"
     // variable.  
     body = bioHub.readBpm();
-    Serial.print("H:");
-    Serial.print(body.heartRate);
-    Serial.print(",C:");
-    Serial.print(body.confidence);
-    Serial.print(",O:");
-    Serial.print(body.oxygen);
-    Serial.println(); 
+    
+    currentMillis = millis();  //get the current "time" (actually the number of milliseconds since the program started)
+    if (currentMillis - startMillis >= period)  //test whether the period has elapsed
+    {
+      testHR = !testHR;
+      fakeHR += num;
+      if(count == 5){
+        count = 0;
+        num = -num;
+      }
+      count++;
+      startMillis = currentMillis;  //IMPORTANT to save the start time of the current LED state.
+    }
+    
+   
     // Serial.print("Status: ");
     // Serial.println(body.status); 
     // tone(BUZZER, 85);
-    delay(250); // Slowing it down, we don't need to break our necks here.
+    if(currentMillis - startMillis >= 250){
+      Serial.print("H:");
+      // testHR ? Serial.print(body.heartRate + fakeHR) : Serial.print(body.heartRate);
+      Serial.print(body.heartRate + fakeHR);
+      Serial.print(",C:");
+      Serial.print(body.confidence);
+      Serial.print(",O:");
+      Serial.print(body.oxygen);
+      Serial.println(); 
+    }
 }
