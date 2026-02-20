@@ -13,6 +13,8 @@ float latestO = 0;
 
 // Sound for Calm mode (put ClairDeLune.mp3 in /data)
 SoundFile calmSong;
+long lastLiveBuzzMs = 0; // Cooldown for live buzzing
+boolean pendingBuzz = false; // Flag for thread-safe buzzing
 
 // --- App screens ---
 enum Screen { HOME, FITNESS, RESTING, CALM, STRESS }
@@ -120,6 +122,15 @@ void draw() {
   // If calm/stress finished, finalize & possibly buzz
   if (calm.justFinished()) onCalmFinished();
   if (stress.justFinished()) onStressFinished();
+
+  // Thread-safe buzzer check
+  if (pendingBuzz) {
+    if (port != null) {
+      port.write('B');
+      println(">>> Serial CMD Sent: B <<<");
+    }
+    pendingBuzz = false;
+  }
 
   switch(screen) {
     case HOME:   drawHome(); break;
@@ -324,14 +335,18 @@ void onCalmFinished() {
 
 void onStressFinished() {
   // If stress detected -> buzz twice
-  if (stress.isStressed(resting.getRestingHR())) {
+  float rhr = resting.getRestingHR();
+  if (stress.isStressed(rhr)) {
+    println("Session Finished: Stress detected! (Avg: " + nf(stress.avgHr(),0,1) + " vs Resting: " + nf(rhr,0,1) + ")");
     buzzTwice();
+  } else {
+    println("Session Finished: No significant stress detected.");
   }
 }
 
 void buzzTwice() {
-  if (port == null) return;
-  port.write("BEEP2\n"); // Arduino will handle this command
+  pendingBuzz = true;
+  println(">>> BUZZER REQUESTED <<<");
 }
 
 void mousePressed() {
@@ -391,6 +406,10 @@ void mousePressed() {
 
 void keyPressed() {
   if (key == 's' || key == 'S') serialRunning = !serialRunning;
+  if (key == 'b' || key == 'B') {
+    println("Manual buzzer test...");
+    buzzTwice();
+  }
 }
 
 void serialEvent(Serial p) {
@@ -415,7 +434,19 @@ void serialEvent(Serial p) {
     if (resting.isActive()) resting.addSample(h, c);
     if (fitness.isActive()) fitness.addSample(h);
     if (calm.isActive()) calm.addSample(h, c, maxHR);
-    if (stress.isActive()) stress.addSample(h, c, maxHR);
+    if (stress.isActive()) {
+      stress.addSample(h, c, maxHR);
+      
+      // LIVE BUZZ: If current HR is significantly above resting
+      float rhr = resting.getRestingHR();
+      if (rhr >= 0 && (h - rhr) >= 5) {
+        if (millis() - lastLiveBuzzMs > 5000) { // Cooldown of 5 seconds
+          println("Live Stress Detected: HR " + nf(h,0,0) + " (Resting: " + nf(rhr,0,0) + ")");
+          buzzTwice();
+          lastLiveBuzzMs = millis();
+        }
+      }
+    }
   }
 }
 
