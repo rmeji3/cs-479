@@ -24,7 +24,7 @@ class RestingHRSession {
   void addSample(float hr, float confidence) {
     if (!active) return;
     if (hr < 30 || hr > 220) return;
-    if (confidence < 80) return;
+    if (confidence < 70) return;
     sum += hr;
     count++;
   }
