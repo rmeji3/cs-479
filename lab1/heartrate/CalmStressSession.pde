@@ -62,7 +62,7 @@ class CalmStressSession {
   void addSample(float hr, float confidence, int maxHR) {
     if (!active) return;
     if (hr < 20 || hr > 250) return;
-    if (confidence < 80) return;
+    if (confidence < 70) return;
 
     int z = zoneIndexForHR(hr, maxHR);
     samples.add(new Sample(millis(), hr, z));
@@ -102,6 +102,6 @@ class CalmStressSession {
   // Used for buzzer decision after stress session
   boolean isStressed(float restingHR) {
     if (!hasResultFlag || restingHR < 0) return false;
-    return (avg - restingHR) >= 5; // threshold: +5 bpm
+    return (avg - restingHR) >= -15; // threshold: +5 bpm
   }
 }
