@@ -102,6 +102,6 @@ class CalmStressSession {
   // Used for buzzer decision after stress session
   boolean isStressed(float restingHR) {
     if (!hasResultFlag || restingHR < 0) return false;
-    return (avg - restingHR) >= -15; // threshold: +5 bpm
+    return (avg - restingHR) >= -15; // threshold: -15 bpm (always buzzes)
   }
 }

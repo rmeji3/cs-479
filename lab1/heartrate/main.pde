@@ -439,7 +439,7 @@ void serialEvent(Serial p) {
       
       // LIVE BUZZ: If current HR is significantly above resting
       float rhr = resting.getRestingHR();
-      if (rhr >= 0 && (h - rhr) >= 5) {
+      if (rhr >= 0 && (h - rhr) >= -15) { // Updated to match the user's always-buzz threshold
         if (millis() - lastLiveBuzzMs > 5000) { // Cooldown of 5 seconds
           println("Live Stress Detected: HR " + nf(h,0,0) + " (Resting: " + nf(rhr,0,0) + ")");
           buzzTwice();

@@ -1,0 +1,107 @@
+class CalmStressSession {
+  String title;
+  int durationMs;
+  boolean isCalm;
+
+  boolean active = false;
+  int startMs = 0;
+
+  ArrayList<Sample> samples = new ArrayList<Sample>();
+
+  // Result bookkeeping
+  boolean finishedFlag = false;
+  boolean hasResultFlag = false;
+  float avg = -1;
+
+  CalmStressSession(String title, int durationMs, boolean isCalm) {
+    this.title = title;
+    this.durationMs = durationMs;
+    this.isCalm = isCalm;
+  }
+
+  void start() {
+    active = true;
+    finishedFlag = false;
+    hasResultFlag = false;
+    avg = -1;
+    startMs = millis();
+    samples.clear();
+  }
+
+  void stop() {
+    if (!active) return;
+    active = false;
+    computeResult();
+    finishedFlag = true;
+  }
+
+  void tick() {
+    if (!active) return;
+    if (millis() - startMs >= durationMs) {
+      active = false;
+      computeResult();
+      finishedFlag = true;
+    }
+  }
+
+  boolean justFinished() {
+    if (finishedFlag) {
+      finishedFlag = false;
+      return true;
+    }
+    return false;
+  }
+
+  boolean isActive() { return active; }
+
+  int secondsLeft() {
+    if (!active) return 0;
+    return max(0, (durationMs - (millis() - startMs)) / 1000);
+  }
+
+  void addSample(float hr, float confidence, int maxHR) {
+    if (!active) return;
+    if (hr < 20 || hr > 250) return;
+    if (confidence < 70) return;
+
+    int z = zoneIndexForHR(hr, maxHR);
+    samples.add(new Sample(millis(), hr, z));
+  }
+
+  void computeResult() {
+    if (samples.size() == 0) {
+      hasResultFlag = false;
+      avg = -1;
+      return;
+    }
+    float sum = 0;
+    for (Sample s : samples) sum += s.hr;
+    avg = sum / samples.size();
+    hasResultFlag = true;
+  }
+
+  boolean hasResult() { return hasResultFlag; }
+  float avgHr() { return avg; }
+
+  // Simple determination text (uses resting HR)
+  String resultText(float restingHR) {
+    if (!hasResultFlag || restingHR < 0) return "Measure resting HR first.";
+    float delta = avg - restingHR;
+
+    if (isCalm) {
+      if (delta <= -2) return "Calm: avg HR is LOWER than resting (" + nf(delta,0,1) + " bpm).";
+      if (delta <= 2)  return "Neutral: avg HR is close to resting (" + nf(delta,0,1) + " bpm).";
+      return "Not calmer: avg HR is ABOVE resting (" + nf(delta,0,1) + " bpm).";
+    } else {
+      if (delta >= 5) return "Stressed: avg HR is ABOVE resting (" + nf(delta,0,1) + " bpm).";
+      if (delta >= 2) return "Slightly elevated vs resting (" + nf(delta,0,1) + " bpm).";
+      return "Not clearly stressed (avg near resting).";
+    }
+  }
+
+  // Used for buzzer decision after stress session
+  boolean isStressed(float restingHR) {
+    if (!hasResultFlag || restingHR < 0) return false;
+    return (avg - restingHR) >= -15; // threshold: +5 bpm
+  }
+}
