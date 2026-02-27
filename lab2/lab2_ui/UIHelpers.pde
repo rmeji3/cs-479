@@ -1,3 +1,5 @@
+import processing.sound.*;
+
 void drawHeader() {
   fill(50);
   textSize(36); 
@@ -48,7 +50,7 @@ void drawOverview() {
   drawStatItem(20, 80, "Current Heart Rate", sensorData[2], "bpm", color(255, 100, 100));
   
   // Resting HR Card
-  drawStatItem(20, 215, "Resting Heart Rate", restingBPM, "bpm", color(255, 200, 0));
+  drawStatItem(20, 200, "Resting Heart Rate", restingBPM, "bpm", color(255, 200, 0));
   
   if (!isRestingBaselineComplete) {
     long elapsed = (millis() - restingBaselineStartTime) / 1000;
@@ -63,11 +65,11 @@ void drawOverview() {
     boolean btnHover = (mouseX-240 > 240 && mouseX-240 < 390 && mouseY > 225 && mouseY < 255);
     fill(btnHover ? 230 : 255, 150);
     stroke(200);
-    rect(240, 225, 150, 25, 5);
+    rect(240, 170, 150, 25, 5);
     fill(80);
     textSize(11);
     textAlign(CENTER);
-    text("RECALCULATE", 315, 242);
+    text("RECALCULATE", 315, 190);
     textAlign(LEFT);
     if (btnHover && mousePressed) {
        isRestingBaselineComplete = false;
@@ -75,28 +77,34 @@ void drawOverview() {
     }
   }
 
-  drawStatItem(20, 350, "Respiratory Rate", sensorData[3], "br/m", color(100, 150, 255));
+  drawStatItem(20, 320, "Respiratory Rate", sensorData[3], "br/m", color(100, 150, 255));
   
   fill(255);
   noStroke();
-  rect(450, 80, 480, 390, 15);
+  rect(450, 80, 480, 295, 15);
   
   fill(50);
-  textSize(24); 
-  text("Zone Intensity Analysis", 480, 120);
+  textSize(22); 
+  text("Zone Intensity Analysis", 480, 115);
   
   float maxHR = 220 - userAge; 
   float hrPercent = (sensorData[2] / maxHR) * 100;
   
-  textSize(18);
+  textSize(16);
   fill(120);
-  text("Effort Intensity", 480, 160);
+  text("Effort Intensity", 480, 145);
   
-  textSize(72); 
+  textSize(64); 
   fill(30);
-  text(int(hrPercent) + "%", 480, 250);
+  String percText = int(hrPercent) + "%";
+  text(percText, 480, 215);
   
-  drawZoneBar(480, 310, 420, hrPercent);
+  // Unit "intensity" label after the percentage
+  textSize(18);
+  fill(160);
+  text(" ", 485 + textWidth(percText), 230);
+  
+  drawZoneBar(480, 260, 420, hrPercent);
 }
 
 void drawFitnessMode() {
@@ -126,8 +134,8 @@ void drawFitnessMode() {
   
   fill(100);
   textSize(22);
-  text("HR: " + int(sensorData[2]) + " bpm", 45, 260);
-  text("Resp: " + int(sensorData[3]) + " br/m", 45, 305);
+  text("HR: " + int(sensorData[2]) + " bpm", 45, 250);
+  text("Resp: " + int(sensorData[3]) + " br/m", 45, 295);
   
   textSize(28);
   text("Intensity: " + int(intensity) + "%", 45, 360);
@@ -142,6 +150,16 @@ void drawFitnessMode() {
     text("Status: PAUSED", 45, 410);
   }
 }
+boolean isMusicPlaying = false;
+void playMusic() {
+  if (!calmMusic.isPlaying()) {
+    calmMusic.loop(); // loop() is usually better for relaxation tracks
+  }
+}
+
+void stopMusic() {
+  calmMusic.stop(); 
+}
 
 void drawStressMode() {
   // Narrow profile box on the left
@@ -155,15 +173,25 @@ void drawStressMode() {
   if (!isRestingBaselineComplete) {
     textSize(18);
     text("Waiting for baseline...", 45, 200);
+    if (calmMusic != null && calmMusic.isPlaying()) calmMusic.stop();
   } else {
     float bpmDiff = sensorData[2] - restingBPM;
     textSize(38);
     if (bpmDiff > 12) {
       fill(255, 50, 50);
       text("STRESSED", 45, 210);
+        // PLAY MUSIC IF STRESSED
+        if (calmMusic != null && !calmMusic.isPlaying()) {
+          calmMusic.loop(); 
+      }  
     } else {
       fill(75, 175, 75);
       text("CALM", 45, 210);
+      
+      // STOP MUSIC IF CALM
+      if (calmMusic != null && calmMusic.isPlaying()) {
+        calmMusic.stop();
+      }
     }
     
     fill(100);
@@ -183,10 +211,15 @@ void drawStressMode() {
   textSize(22);
   text("Relaxation Space", 430, 120);
   
-  // Music Indicator
-  fill(100, 150, 255);
-  textSize(16);
-  text("\u266B Now Playing: Clair De Lune", 430, 150);
+  if (calmMusic != null && calmMusic.isPlaying()) {
+    fill(100, 150, 255);
+    textSize(16);
+    text("\u266B Now Playing: Clair De Lune", 430, 150);
+  } else {
+    fill(150);
+    textSize(16);
+    text("System Silent - Relax", 430, 150);
+  }
   
   // Calming Pacer (Slower than meditation: 4s inhale / 8s exhale)
   long cycleTime = 12000;
@@ -395,23 +428,40 @@ void drawPSCStat(float x, float y, String label, int val, String unit) {
 void drawStatItem(float x, float y, String label, float val, String unit, color c) {
   fill(255);
   noStroke();
-  rect(x, y, 400, 120, 15); 
+  rect(x, y, 400, 95, 15); // Height reduced to 95 
   
-  fill(100);
-  textSize(20); 
-  text(label, x + 30, y + 45);
+  // Icon/Imagery Logic based on reference image
+  String icon = "️";
+  if (label.contains("Resting")) icon = " ";
+  if (label.contains("Respiratory") || label.contains("Resp")) icon = " ";
   
+  // Icon Circle on the Right (as seen in UI reference)
+  fill(c, 40); 
+  ellipse(x + 350, y + 47, 55, 55);
+  fill(c);
+  textSize(28);
+  textAlign(CENTER, CENTER);
+  text(icon, x + 350, y + 45);
+  
+  // Adjusted Text Positions (Moved Up)
+  textAlign(LEFT, TOP);
+  fill(120);
+  textSize(16); 
+  text(label, x + 25, y + 18); // Moved up from y+45 
+  
+  // Value Position
   fill(30);
-  textSize(48); 
+  textSize(42); 
   String valText = str(int(val));
-  text(valText, x + 30, y + 95);
+  float valWidth = textWidth(valText);
+  text(valText, x + 25, y + 38); 
   
-  // Right-aligned unit text
-  fill(180);
-  textSize(22);
-  textAlign(RIGHT);
-  text(unit, x + 370, y + 95);
-  textAlign(LEFT); // Reset
+  // Unit Position (Anchored exactly after the number)
+  fill(160);
+  textSize(18);
+  // We add +5 for a tiny gap between number and unit
+  text(unit, x + 25 + valWidth + 5, y + 54); 
+  textAlign(LEFT);
 }
 
 void drawZoneBar(float x, float y, float w, float percent) {
@@ -432,9 +482,9 @@ void drawZoneBar(float x, float y, float w, float percent) {
 
 void drawCalibrateButton() {
   float bx = width - 180;
-  float by = height - 60;
+  float by = height - 326;
   float bw = 160;
-  float bh = 40;
+  float bh = 38;
   
   boolean hover = (mouseX > bx && mouseX < bx + bw && mouseY > by && mouseY < by + bh);
   
