@@ -4,7 +4,7 @@ class RealTimeGraph {
   ArrayList<Float> sessionValues = new ArrayList<Float>(); // For Fitness session tracking
   String title;
   String statusLabel = "";
-  color lineCol;
+  color lineCol = #120B09;
   float yMin = 0, yMax = 1023;
   boolean showTimeTicks = false;
   boolean isHrGraph = false;
@@ -50,11 +50,30 @@ class RealTimeGraph {
   void display() {
     fill(255);
     noStroke();
-    rect(x, y, w, h, 15);
+    rect(x, y, w, h, 12);
     
     fill(50);
-    textSize(18); 
+    textSize(18);
+    textAlign(LEFT);
     text(title, x + 10, y - 10);
+  
+    // --- NEW: Y-Axis Label ---
+    pushMatrix();
+    translate(x - 45, y + h/2);
+    rotate(HALF_PI * 3); // Rotate 270 degrees
+    textAlign(CENTER);
+    fill(0); // Black text
+    textSize(12);
+    text(isHrGraph ? "Heart Rate (BPM)" : "Amplitude", 0, 15);
+    popMatrix();
+    
+    // --- NEW: X-Axis Label ---
+    textAlign(CENTER);
+    text("Time (seconds)", x + w/2, y + h + 35);
+  
+    fill(120);
+    textSize(1); 
+    //text(title, x + 10, y - 10);
     
     if (!statusLabel.equals("")) {
       textAlign(RIGHT);
@@ -64,7 +83,7 @@ class RealTimeGraph {
       textAlign(LEFT);
     }
     
-    fill(150);
+    fill(0);
     textSize(11);
     textAlign(RIGHT);
     
@@ -104,19 +123,25 @@ class RealTimeGraph {
       fill(150);
       textSize(11);
       textAlign(CENTER);
+      // Vertical offset for the ticks (just below the bottom border)
+      float tickY = y + h + 15; 
+      // Vertical offset for the axis label (further below the ticks)
+      float labelY = y + h + 35;
       if (autoAdjustX) {
         int totalSecs = sessionValues.size();
         int step = max(1, totalSecs / 5); 
         for (int i=0; i<sessionValues.size(); i += step) {
           float vx = map(i, 0, max(1, sessionValues.size()-1), x, x+w);
-          text(i + "s", vx, y + h + 15);
+          text(i + "s", vx, tickY);
         }
       } else {
         for (int i=0; i<=w; i+=100) {
           float sec = i / 60.0;
-          text(nf(sec, 0, 1) + "s", x + w - i, y + h + 15);
+          text(nf(sec, 0, 1) + "s", x + w - i, tickY);
         }
       }
+      textSize(12);
+      text("Time (seconds)", x + w/2, labelY);
     }
     textAlign(LEFT);
     
