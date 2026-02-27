@@ -24,7 +24,7 @@ class RealTimeGraph {
     values = new float[int(w)];
     for(int i=0; i<values.length; i++) values[i] = yMin + (yMax-yMin)/2;
   }
-  
+  //mu
   void setStatus(String s) {
     statusLabel = s;
   }
