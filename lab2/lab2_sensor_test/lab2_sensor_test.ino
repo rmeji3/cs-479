@@ -53,6 +53,7 @@ void setup() {
   pinMode(ad8232LOPlus, INPUT);
   pinMode(ad8232LOMinus, INPUT);
   
+  Serial.println("--- SYSTEM START: Lab 2 Sensor Test ---");
   calibrationStartTime = millis(); // Start auto-calib on boot
   delay(1000);
 }
@@ -73,24 +74,25 @@ void loop() {
 
   // Maintain a consistent sampling rate (100Hz)
   if (currentTime - lastSampleTime >= sampleInterval) {
-    lastSampleTime = currentTime;
+    lastSampleTime += sampleInterval; // Fixed-interval timing (prevents drift/bursts)
 
     // --- 1. SENSOR READINGS ---
     int rawValue = analogRead(ad8232Output);
-    static float ecgFiltered = 512;
-    
-    // Glitch Filter: If it jumps too fast (noise), ignore the spike
-    if (abs(rawValue - ecgFiltered) < 300) { 
-      // Smoother EMA (0.2 = more smoothing)
-      ecgFiltered = (0.2 * rawValue) + (0.8 * ecgFiltered);
-    }
+    static float ecgFiltered = -1.0; 
+    if (ecgFiltered < 0) ecgFiltered = rawValue; // Initialize with first reading
+
+    // Adaptive Filter: If jump is < 300, use 0.2 alpha. If it's a huge spike,
+    // still follow it very slowly (0.02) so the filter doesn't stay stuck forever.
+    float ecgAlpha = (abs(rawValue - (int)ecgFiltered) < 300) ? 0.2 : 0.02;
+    ecgFiltered = (ecgAlpha * rawValue) + ((1.0 - ecgAlpha) * ecgFiltered);
     int ecgRaw = (int)ecgFiltered;
     
     int rawFsr = analogRead(fsrPin);
-    static float fsrFiltered = 512;
-    if (abs(rawFsr - fsrFiltered) < 400) {
-      fsrFiltered = (0.15 * rawFsr) + (0.85 * fsrFiltered);
-    }
+    static float fsrFiltered = -1.0;
+    if (fsrFiltered < 0) fsrFiltered = rawFsr; // Initialize with first reading
+
+    float fsrAlpha = (abs(rawFsr - (int)fsrFiltered) < 400) ? 0.15 : 0.02;
+    fsrFiltered = (fsrAlpha * rawFsr) + ((1.0 - fsrAlpha) * fsrFiltered);
     int fsrRaw = (int)fsrFiltered;
 
     // --- 2. AUTO-CALIBRATION LOGIC ---
@@ -174,11 +176,12 @@ void loop() {
     // --- 4. SERIAL OUTPUT FOR PROCESSING ---
     /* 
      * Format: ECG_RAW, FSR_RAW, BPM, RESP_RATE, INHALE_MS, EXHALE_MS
+     * Using reduced decimal precision for speed to prevent buffer congestion
      */
     Serial.print(ecgRaw);           Serial.print(",");
     Serial.print(fsrRaw);           Serial.print(",");
     Serial.print(bpm);              Serial.print(",");
-    Serial.print(respirationRate);  Serial.print(",");
+    Serial.print(respirationRate, 1); Serial.print(","); 
     Serial.print(inhaleDuration);   Serial.print(",");
     Serial.println(exhaleDuration);
   }
