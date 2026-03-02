@@ -224,8 +224,8 @@ void mousePressed() {
     }
   }
   
-  // Check if clicking Calibrate Button (Bottom Right: 1030-1180, 750-790)
-  if (mouseX > width - 180 && mouseX < width - 20 && mouseY > height - 60 && mouseY < height - 20) {
+  // Check if clicking Calibrate Button (Updated match to visual location above ECG graph)
+  if (mouseX > width - 180 && mouseX < width - 20 && mouseY > height - 326 && mouseY < height - 288) {
     if (!isCalibratingResp) {
       isCalibratingResp = true;
       calibStartTime = millis();

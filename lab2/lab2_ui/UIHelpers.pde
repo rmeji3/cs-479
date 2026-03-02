@@ -678,14 +678,14 @@ void drawCalibrateButton() {
     fill(255, 100, 100);
     textSize(14);
     textAlign(RIGHT);
-    text("CALIBRATING: " + timeLeft + "s", width - 20, height - 70);
+    text("CALIBRATING: " + timeLeft + "s", width - 20, by - 12);
     textAlign(LEFT);
     fill(255, 200, 200); // Progress color
   } else if (millis() - calibStartTime < 13000 && calibStartTime > 0) { // Show for 3s after 10s calib
     fill(75, 175, 75);
     textSize(14);
     textAlign(RIGHT);
-    text("BREATHING CALIBRATED!", width - 20, height - 70);
+    text("BREATHING CALIBRATED!", width - 20, by - 12);
     textAlign(LEFT);
     fill(100, 200, 100);
   } else {
