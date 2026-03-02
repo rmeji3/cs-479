@@ -21,6 +21,12 @@ class RealTimeGraph {
     this.lineCol = lineCol;
     this.yMin = yMin;
     this.yMax = yMax;
+
+    if (title != null && title.toLowerCase().indexOf("ecg") >= 0) {
+      this.yMin = 200;
+      this.yMax = 700;
+    }
+    
     values = new float[int(w)];
     for(int i=0; i<values.length; i++) values[i] = yMin + (yMax-yMin)/2;
   }
