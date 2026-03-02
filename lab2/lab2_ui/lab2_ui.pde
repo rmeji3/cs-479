@@ -7,6 +7,12 @@ SoundFile calmMusic;
 String serialDataLine;
 float[] sensorData = new float[8]; // ecgRaw, fsrRaw, bpm, respRate, inhale, exhale, HRV, SpO2
 
+// Fitness Components
+RealTimeGraph fitnessHrGraph;
+
+// PSC Help Dropdown
+boolean pscHelpOpen = false;
+
 // UI Components
 Sidebar leftSidebar;
 RealTimeGraph ecgGraph;
@@ -37,9 +43,6 @@ float tempMax = 0;
 float respInhaleThreshold = 850;
 float respExhaleThreshold = 700;
 
-// Fitness Components
-RealTimeGraph fitnessHrGraph;
-
 // Visual Theme
 color bgColor = color(245, 247, 250);
 color sidebarColor = color(210, 255, 210); // Light Mint
@@ -66,8 +69,8 @@ void setup() {
   
   // Initialize UI components
   leftSidebar = new Sidebar();
-  ecgGraph = new RealTimeGraph(260, 520, 440, 220, "Live ECG Signal", color(100, 150, 255));
-  respGraph = new RealTimeGraph(740, 520, 440, 220, "Respiratory (FSR)", color(255, 200, 50));
+  ecgGraph = new RealTimeGraph(260, 500, 440, 240, "Live ECG Signal", color(100, 150, 255));
+  respGraph = new RealTimeGraph(740, 500, 440, 240, "Respiratory (FSR)", color(255, 200, 50));
   
   // New Fitness HR Graph - Slightly narrower (540px)
   fitnessHrGraph = new RealTimeGraph(400, 80, 540, 390, "Heart Rate Trend", color(150), 40, 220);
@@ -179,6 +182,8 @@ void draw() {
   ecgGraph.update(sensorData[0]);
   respGraph.update(sensorData[1]);
   
+  pscUpdate();
+  
   // Calibrate Button
   drawCalibrateButton();
 }
@@ -201,13 +206,22 @@ void keyPressed() {
 
 void mousePressed() {
   // Check if clicking age box in sidebar
-  // sidebar.w = 220, ageY = height - 80, rect(15, ageY - 20, w - 30, 40)
   float ageY = height - 80;
   if (mouseX < 220 && mouseY > ageY - 30 && mouseY < ageY + 30) {
     isAgeFocused = true;
     ageBuffer = str(userAge);
   } else {
     isAgeFocused = false;
+  }
+  
+  // PSC Help button
+  if (currentMode.equals("PSC Analysis")) {
+    if (mouseX > 900 && mouseX < 1000 && mouseY > 22 && mouseY < 52) {
+      pscHelpOpen = !pscHelpOpen;
+    } else if (pscHelpOpen) {
+      boolean insidePanel = (mouseX > 260 && mouseX < 1180 && mouseY > 80 && mouseY < 640);
+      if (!insidePanel) pscHelpOpen = false;
+    }
   }
   
   // Check if clicking Calibrate Button (Bottom Right: 1030-1180, 750-790)
