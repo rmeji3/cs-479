@@ -64,7 +64,11 @@ class RealTimeGraph {
     textAlign(CENTER);
     fill(0); // Black text
     textSize(12);
+//<<<<<<< HEAD
     text(isHrGraph ? "Heart Rate (BPM)" : "A ", 0, 15);
+//=======
+    text(isHrGraph ? "Heart Rate (BPM)" : "Amplitude", 0, 15);
+//>>>>>>> 379d40347e5a442fd474f4c0c1d029a70b29c828
     popMatrix();
     
     // --- NEW: X-Axis Label ---

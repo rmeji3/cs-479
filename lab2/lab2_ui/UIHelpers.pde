@@ -76,6 +76,7 @@ void drawOverview() {
 );
     
     // 3. Draw the Button
+    // Added a slight "click" color change for feedback
     if (btnHover && mousePressed) {
         fill(100, 200); // Darker when clicking
     } else {
@@ -132,6 +133,7 @@ void drawOverview() {
   
   drawZoneBar(480, 260, 420, hrPercent);
 }
+
 
 void drawFitnessMode() {
   // Narrow profile box (350 wide) to fit wider trend graph
