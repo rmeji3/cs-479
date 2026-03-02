@@ -327,93 +327,224 @@ void drawMeditationMode() {
 }
 
 void drawPSCMode() {
-  // Stats Panel on the Left
+  // ── LEFT PANEL: Core Vitals + z-scores + features ────────────────────────
   fill(255);
+  noStroke();
   rect(20, 80, 350, 390, 15);
-  
-  fill(50);
-  textSize(22);
-  text("Core Vitals", 45, 120);
-  
-  // Vital list
-  drawPSCStat(45, 160, "HR", int(sensorData[2]), "bpm");
-  drawPSCStat(45, 220, "HRV", int(sensorData[6]), "ms");
-  drawPSCStat(45, 280, "SpO2", int(sensorData[7]), "%");
-  drawPSCStat(45, 340, "Resp", int(sensorData[3]), "br/m");
 
-  // Diagnostic Panel on the Right
-  fill(255);
-  rect(400, 80, 540, 390, 15);
-  
   fill(50);
-  textSize(22);
-  text("Physiological State Diagnostic", 430, 120);
-  
-  // Logic for States
-  String state = "Indeterminate";
-  String desc = "Analyzing vital patterns...";
-  color stateCol = color(150);
-  
-  float hr = sensorData[2];
-  float hrv = sensorData[6];
-  float spo2 = sensorData[7];
-  float resp = sensorData[3];
-  
-  if (!isRestingBaselineComplete) {
-    state = "Calibrating";
-    desc = "Need resting baseline for full analysis.";
-  } else if (spo2 < 93) {
-    state = "Hypoxic Stress";
-    desc = "Low oxygen saturation detected. Oxygen flow may be restricted.";
-    stateCol = color(255, 100, 0);
-  } else if (spo2 < 94 && hr > 100) {
-    state = "Dysregulated State";
-    desc = "Impaired homeostasis. Oxygen dropping while heart is racing.";
-    stateCol = color(200, 0, 0);
-  } else if (hr > restingBPM + 20 && hrv < 35) {
-    state = "Acute Stress";
-    desc = "High sympathetic arousal. Deep breathing recommended.";
-    stateCol = color(255, 50, 50);
-  } else if (resp > 28 || resp < 8) {
-    state = "Respiratory Strain";
-    desc = "Abnormal breathing frequency. Possible hyperventilation.";
-    stateCol = color(100, 150, 255);
-  } else if (hrv < 25 && hr < restingBPM + 15) {
-    state = "Autonomic Imbalance";
-    desc = "Low HRV relative to HR. Possible fatigue or overtraining.";
-    stateCol = color(200, 100, 255);
-  } else if (hr > restingBPM + 5 && hr < restingBPM + 20 && hrv > 45) {
-    state = "Recovery";
-    desc = "Heart returning to baseline with strong autonomic control.";
-    stateCol = color(0, 200, 150);
-  } else if (abs(hr - restingBPM) < 10 && hrv > 50 && spo2 >= 96) {
-    state = "Rested Stable";
-    desc = "Optimal homeostasis. Vagal tone is dominant and healthy.";
-    stateCol = color(75, 175, 75);
+  textSize(20);
+  text("Core Vitals", 45, 118);
+
+  drawPSCStat(45, 155, "HR",   int(sensorData[2]), "bpm");
+  drawPSCStat(45, 205, "HRV",  int(sensorData[6]), "ms");
+  drawPSCStat(45, 255, "SpO2", int(sensorData[7]), "%");
+  drawPSCStat(45, 305, "Resp", int(sensorData[3]), "br/m");
+
+  float readiness = pscDataReadiness();
+  if (readiness >= 1.0) {
+    fill(120);
+    textSize(11);
+    text("Session z-scores", 45, 337);
+    drawZScoreBar(45, 345, "HR",   zHR,   color(255, 100, 100));
+    drawZScoreBar(45, 365, "HRV",  zHRV,  color(100, 200, 150));
+    drawZScoreBar(45, 385, "SpO2", zSpO2, color(100, 150, 255));
+    drawZScoreBar(45, 405, "RR",   zRR,   color(255, 200, 50));
+    
+    fill(120);
+    textSize(11);
+    String slopeLabel = (featHRSlope > 0.05) ? "HR trending UP" : (featHRSlope < -0.05) ? "HR trending DOWN" : "HR stable";
+    text(slopeLabel, 45, 450);
+  } else {
+    fill(200);
+    textSize(13);
+    text("Collecting baseline: " + int(readiness * 100) + "%", 45, 350);
+    noStroke();
+    fill(220);
+    rect(45, 360, 280, 10, 5);
+    fill(100, 200, 150);
+    rect(45, 360, 280 * readiness, 10, 5);
   }
 
-  // Draw State Box
+  // ── RIGHT PANEL: PSC State + ANS State ────────────────────────────────────
+  fill(255);
   noStroke();
-  fill(stateCol, 20);
-  rect(430, 150, 480, 100, 15);
-  
-  fill(stateCol);
-  textSize(36);
-  text(state, 450, 215);
-  
-  fill(80);
+  rect(400, 80, 540, 390, 15);
+
+  // ─ PSC Header + Help Button ────────────────────────────────────────────────
+  fill(50);
   textSize(18);
-  textLeading(24);
-  text(desc, 430, 290, 480, 100);
-  
-  // Mini Visualization (State Intensity)
-  stroke(240);
-  line(430, 370, 910, 370);
+  text("Physiological State (PSC)", 425, 118);
+
+  boolean helpHover = (mouseX - 240 > 660 && mouseX - 240 < 760 && mouseY > 22 && mouseY < 52);
   noStroke();
-  fill(stateCol);
-  rect(430, 368, map(hrv, 10, 100, 50, 480), 4, 2);
+  fill(pscHelpOpen ? color(80, 140, 220) : (helpHover ? color(200) : color(230)));
+  rect(660, 22, 100, 30, 8);
+  fill(pscHelpOpen ? 255 : 60);
+  textSize(13);
+  textAlign(CENTER);
+  text(pscHelpOpen ? "✕ Close" : "? Help", 710, 42);
+  textAlign(LEFT);
+
+  // PSC State box
+  noStroke();
+  fill(pscColor, 25);
+  rect(420, 130, 500, 90, 12);
+  fill(pscColor);
+  textSize(32);
+  text(pscState, 435, 185);
+
+  fill(80);
+  textSize(14);
+  textLeading(20);
+  text(pscDesc, 420, 240, 500, 70);
+  textLeading(12);
+
+  stroke(230);
+  line(420, 318, 920, 318);
+  noStroke();
+
+  fill(50);
+  textSize(18);
+  text("ANS State Classifier", 425, 345);
+
+  fill(ansColor, 25);
+  rect(420, 355, 500, 72, 12);
+  fill(ansColor);
+  textSize(26);
+  text(ansState, 435, 390);
+
+  fill(80);
+  textSize(13);
+  text(ansDesc, 435, 415);
+
+  stroke(230);
+  line(420, 448, 920, 448);
+  noStroke();
+  fill(pscColor);
+  float barW = map(sensorData[6], 10, 100, 20, 498);
+  rect(420, 450, constrain(barW, 20, 498), 5, 2);
+  fill(140);
+  textSize(11);
+  text("Autonomic Recovery Strength  (HRV: " + int(sensorData[6]) + " ms)", 420, 470);
+
+  // ── Help Dropdown Overlay (drawn last so it sits on top) ──────────────────
+  if (pscHelpOpen) drawPSCHelpOverlay();
+}
+
+void drawPSCHelpOverlay() {
+  noStroke();
+  
+  fill(255, 252);
+  rect(20, 80, 920, 435, 15);
+  
+  fill(80, 140, 220);
+  rect(20, 80, 920, 6, 15);
+  
+  fill(30);
+  textSize(20);
+  textAlign(LEFT);
+  text("How to read this screen — plain and simple", 45, 120);
+  
+  // ── SECTION 1 ──────────────────────────────────────────────────────────────
+  fill(80, 140, 220);
+  rect(45, 135, 4, 85);
+  fill(30);
+  textSize(14);
+  text("The two outputs", 58, 153);
+  fill(90);
   textSize(12);
-  text("Autonomic Recovery Strength", 430, 390);
+  textLeading(18);
+  text("PHYSIOLOGICAL STATE tells you what your body is doing right now.", 58, 172);
+  text("ANS STATE tells you which part of your nervous system is in charge.", 58, 190);
+  text("Both update live — just watch them change.", 58, 208);
+  textLeading(12);
+
+  // ── SECTION 2: PSC state table ─────────────────────────────────────────────
+  fill(30);
+  textSize(14);
+  text("What each state means", 45, 238);
+  
+  String[][] rows = {
+    {"Rested Stable",           "🟢", "Everything is calm. Your body is happy."},
+    {"Recovery",                "🔵", "Coming down from activity. Body is healing."},
+    {"Acute Stress",            "🔴", "Heart rate up, breathing fast. You're stressed."},
+    {"Respiratory Strain",      "🟡", "Breathing is too fast or too slow. Focus on slowing it down."},
+    {"Hypoxic Stress",          "🟠", "Oxygen level dropping. Breathe slower and deeper."},
+    {"Dysregulated State",      "🔴", "Oxygen low AND heart racing — most severe. Rest immediately."},
+    {"Autonomic Imbalance",     "🟣", "Low HRV at rest — possible fatigue or overtraining."},
+    {"Autonomic Dysregulation", "🟣", "Signals are erratic — nervous system is unstable."},
+  };
+  
+  float rowY = 255;
+  for (int i = 0; i < rows.length; i++) {
+    if (i % 2 == 0) {
+      fill(245);
+      noStroke();
+      rect(45, rowY - 13, 880, 20, 4);
+    }
+    fill(30);
+    textSize(12);
+    text(rows[i][0], 55, rowY);
+    text(rows[i][1], 240, rowY);
+    fill(80);
+    text(rows[i][2], 265, rowY);
+    rowY += 22;
+  }
+
+  // ── SECTION 3: ANS modes ────────────────────────────────────────────────────
+  float col2X = 490;
+  fill(80, 140, 220);
+  rect(col2X, 135, 4, 85);
+  fill(30);
+  textSize(14);
+  text("ANS modes — which side is winning?", col2X + 13, 153);
+  fill(90);
+  textSize(12);
+  textLeading(18);
+  text("Your nervous system has two modes that compete:", col2X + 13, 172);
+  text("STRESS mode (sympathetic) vs REST mode (parasympathetic).", col2X + 13, 190);
+  text("The ANS box tells you which one is currently dominant.", col2X + 13, 208);
+  textLeading(12);
+
+  String[][] ansModes = {
+    {"Fight / Flight", "🔴", "Stress mode is on. Heart up, breathing up."},
+    {"Recovery Mode",  "🟢", "Rest mode is on. Heart calm, breathing slow."},
+    {"Balanced Mode",  "🔵", "Neither side is dominant. You're neutral."},
+    {"Dysregulated",   "🟣", "Can't tell — signals are too chaotic."},
+  };
+  
+  rowY = 255;
+  for (int i = 0; i < ansModes.length; i++) {
+    if (i % 2 == 0) {
+      fill(245);
+      noStroke();
+      rect(col2X + 10, rowY - 13, 415, 20, 4);
+    }
+    fill(30);
+    textSize(12);
+    text(ansModes[i][0], col2X + 20, rowY);
+    text(ansModes[i][1], col2X + 155, rowY);
+    fill(80);
+    text(ansModes[i][2], col2X + 180, rowY);
+    rowY += 22;
+  }
+
+  // ── SECTION 4: The bars ─────────────────────────────────────────────────────
+  fill(30);
+  textSize(13);
+  text("The small bars on the left (HR / HRV / SpO2 / RR)", 45, 447);
+  fill(90);
+  textSize(12);
+  text("Each bar shows if that signal is higher or lower than YOUR average for this session.", 45, 463);
+  text("Bar goes right = rising above your normal.   Bar goes left = dropping below your normal.", 45, 479);
+  text("The app learns your baseline as you use it — comparisons are personal to you, not a population average.", 45, 495);
+
+  fill(140);
+  textSize(11);
+  textAlign(RIGHT);
+  text("Click  ? Help  again or click outside to close", 930, 508);
+  textAlign(LEFT);
 }
 
 void drawPSCStat(float x, float y, String label, int val, String unit) {
@@ -478,6 +609,31 @@ void drawZoneBar(float x, float y, float w, float percent) {
   fill(0);
   float px = x + (w * constrain(percent/100, 0, 1));
   triangle(px, y-5, px-5, y-15, px+5, y-15);
+}
+
+void drawZScoreBar(float x, float y, String label, float z, color c) {
+  float barMax = 160;
+  float midX   = x + 50;
+
+  fill(130);
+  textSize(10);
+  text(label, x, y + 8);
+
+  fill(235);
+  noStroke();
+  rect(midX, y, barMax, 10, 3);
+
+  float fillW = constrain(z * (barMax / 4.0), -barMax / 2.0, barMax / 2.0);
+  fill(c, 200);
+  if (fillW >= 0) rect(midX + barMax / 2.0, y, fillW, 10, 3);
+  else            rect(midX + barMax / 2.0 + fillW, y, -fillW, 10, 3);
+
+  fill(160);
+  rect(midX + barMax / 2.0, y, 1, 10);
+
+  fill(80);
+  textSize(10);
+  text((z >= 0 ? "+" : "") + nf(z, 1, 1), midX + barMax + 4, y + 8);
 }
 
 void drawCalibrateButton() {
