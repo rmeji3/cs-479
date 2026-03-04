@@ -23,8 +23,13 @@ class RealTimeGraph {
     this.yMax = yMax;
 
     if (title != null && title.toLowerCase().indexOf("ecg") >= 0) {
+<<<<<<< HEAD
       this.yMin = 100;
       this.yMax = 500;
+=======
+      this.yMin = 400;
+      this.yMax = 580;
+>>>>>>> 4caf72373bb0707789af68b9bdc954524f46af63
     }
 
     values = new float[int(w)];
