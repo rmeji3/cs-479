@@ -23,10 +23,10 @@ class RealTimeGraph {
     this.yMax = yMax;
 
     if (title != null && title.toLowerCase().indexOf("ecg") >= 0) {
-      this.yMin = 200;
-      this.yMax = 700;
+      this.yMin = 100;
+      this.yMax = 500;
     }
-    
+
     values = new float[int(w)];
     for(int i=0; i<values.length; i++) values[i] = yMin + (yMax-yMin)/2;
   }
@@ -70,17 +70,21 @@ class RealTimeGraph {
     textAlign(CENTER);
     fill(0); // Black text
     textSize(12);
-//<<<<<<< HEAD
-    text(isHrGraph ? "Heart Rate (BPM)" : "A ", 0, 15);
 //=======
-    text(isHrGraph ? "Heart Rate (BPM)" : "Amplitude", 0, 15);
+    // Custom y-axis label for ECG and FSR/Resp graphs
+    String lowerTitle = title == null ? "" : title.toLowerCase();
+    if (isHrGraph) {
+      text("Heart Rate (BPM)", 0, 15);
+    } else if (lowerTitle.indexOf("ecg") >= 0) {
+      text("ECG Amplitude (mV)", 0, 15);
+    } else if (lowerTitle.indexOf("resp") >= 0 || lowerTitle.indexOf("fsr") >= 0) {
+      text("FSR Voltage (V)", 0, 15);
+    } else {
+      text("Amplitude", 0, 15);
+    }
 //>>>>>>> 379d40347e5a442fd474f4c0c1d029a70b29c828
     popMatrix();
     
-    // --- NEW: X-Axis Label ---
-    textAlign(CENTER);
-    text("Time (seconds)", x + w/2, y + h + 35);
-  
     fill(120);
     textSize(1); 
     //text(title, x + 10, y - 10);
@@ -151,7 +155,13 @@ class RealTimeGraph {
         }
       }
       textSize(12);
-      text("Time (seconds)", x + w/2, labelY);
+      text("Time (s)", x + w/2, labelY);
+    } else {
+      // Show x-axis label for overview graphs even without time ticks
+      fill(150);
+      textSize(12);
+      textAlign(CENTER);
+      text("Time (s)", x + w/2, y + h + 35);
     }
     textAlign(LEFT);
     

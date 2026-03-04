@@ -69,11 +69,15 @@ void setup() {
   
   // Initialize UI components
   leftSidebar = new Sidebar();
-  ecgGraph = new RealTimeGraph(260, 500, 440, 240, "Live ECG Signal", color(100, 150, 255));
-  respGraph = new RealTimeGraph(740, 500, 440, 240, "Respiratory (FSR)", color(255, 200, 50));
+  // default dimensions used outside of the Overview tab; these keep the graphs
+  // compact so they don't overlap with other UI elements in the various modes.
+  int defaultGraphW = 440;
+  int defaultGraphH = 240;
+  ecgGraph = new RealTimeGraph(260, 450, defaultGraphW, defaultGraphH, "Live ECG Signal", color(100, 150, 255));
+  respGraph = new RealTimeGraph(740, 450, defaultGraphW, defaultGraphH, "Respiratory (FSR)", color(255, 200, 50));
   
   // New Fitness HR Graph - Slightly narrower (540px)
-  fitnessHrGraph = new RealTimeGraph(400, 80, 540, 390, "Heart Rate Trend", color(150), 40, 220);
+  fitnessHrGraph = new RealTimeGraph(400, 80, 540, 340, "Heart Rate Trend", color(150), 40, 220);
   fitnessHrGraph.isHrGraph = true;
   fitnessHrGraph.showTimeTicks = true;
   fitnessHrGraph.autoAdjustX = true; // Shows the whole session
@@ -116,8 +120,16 @@ void draw() {
   
   if (currentMode.equals("Overview")) {
     drawOverview();
-    ecgGraph.y = 520;
-    respGraph.y = 520;
+    // Use the same graph sizes and positions as other tabs for consistency
+    ecgGraph.x = 260;
+    ecgGraph.y = 480;
+    ecgGraph.w = 440;
+    ecgGraph.h = 240;
+
+    respGraph.x = 740;
+    respGraph.y = 480;
+    respGraph.w = 440;
+    respGraph.h = 240;
   } else if (currentMode.equals("Fitness Mode")) {
     drawFitnessMode();
     // Only update the trend graph if the session is ACTIVE
@@ -126,17 +138,34 @@ void draw() {
     }
     fitnessHrGraph.display();
     
-    ecgGraph.y = 560;
-    respGraph.y = 560;
+    ecgGraph.y = 500;
+    respGraph.y = 500;
+    // restore default dimensions & x position in other modes
+    ecgGraph.w = 440;
+    ecgGraph.h = 240;
+    ecgGraph.x = 260;
+    respGraph.w = 440;
+    respGraph.h = 240;
+    respGraph.x = 740;
   } else if (currentMode.equals("PSC Analysis")) {
     drawPSCMode();
     ecgGraph.y = 520;
     respGraph.y = 520;
+    ecgGraph.w = 440;
+    ecgGraph.h = 240;
+    ecgGraph.x = 260;
+    respGraph.w = 440;
+    respGraph.h = 240;
   } else {
     if (currentMode.equals("Stress Monitoring")) drawStressMode();
     else if (currentMode.equals("Meditation Monitoring")) drawMeditationMode();
     ecgGraph.y = 520;
     respGraph.y = 520;
+    ecgGraph.w = 440;
+    ecgGraph.h = 240;
+    ecgGraph.x = 260;
+    respGraph.w = 440;
+    respGraph.h = 240;
   }
   
   popMatrix();
@@ -224,8 +253,8 @@ void mousePressed() {
     }
   }
   
-  // Check if clicking Calibrate Button (Bottom Right: 1030-1180, 750-790)
-  if (mouseX > width - 180 && mouseX < width - 20 && mouseY > height - 60 && mouseY < height - 20) {
+  // Check if clicking Calibrate Button (Updated match to visual location above ECG graph)
+  if (mouseX > width - 180 && mouseX < width - 20 && mouseY > height - 326 && mouseY < height - 288) {
     if (!isCalibratingResp) {
       isCalibratingResp = true;
       calibStartTime = millis();

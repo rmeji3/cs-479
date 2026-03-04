@@ -138,7 +138,7 @@ void drawOverview() {
 void drawFitnessMode() {
   // Narrow profile box (350 wide) to fit wider trend graph
   fill(255);
-  rect(20, 80, 350, 390, 15);
+  rect(20, 80, 340, 340, 15);
   
   float maxHR = 220 - userAge; 
   float intensity = (sensorData[2] / maxHR) * 100;
@@ -192,7 +192,7 @@ void stopMusic() {
 void drawStressMode() {
   // Narrow profile box on the left
   fill(255);
-  rect(20, 80, 350, 390, 15);
+  rect(20, 80, 350, 340, 15);
   
   fill(50);
   textSize(22);
@@ -234,7 +234,7 @@ void drawStressMode() {
 
   // Calmness Panel on the right
   fill(255);
-  rect(400, 80, 540, 390, 15);
+  rect(400, 80, 540, 340, 15);
   fill(50);
   textSize(22);
   text("Relaxation Space", 430, 120);
@@ -273,17 +273,19 @@ void drawStressMode() {
   fill(pacerColor, 150);
   ellipse(670, 280, pacerSize, pacerSize);
   
+  // Instruction text centered in the pacer - scales with pacerSize
   fill(50);
   textAlign(CENTER);
-  textSize(24);
-  text(instruction, 670, 440);
+  float instructionSize = map(pacerSize, 100, 240, 14, 28);
+  textSize(instructionSize);
+  text(instruction, 670, 280);
   textAlign(LEFT);
 }
 
 void drawMeditationMode() {
   // Narrow profile box on the left
   fill(255);
-  rect(20, 80, 350, 390, 15);
+  rect(20, 80, 350, 340, 15);
   
   fill(50);
   textSize(22);
@@ -315,10 +317,10 @@ void drawMeditationMode() {
 
   // Visual Breathing Guide Box
   fill(255);
-  rect(400, 80, 540, 390, 15);
+  rect(400, 80, 540, 340, 15);
   fill(50);
   textSize(22);
-  text("Visual Breathing Guide (1:3)", 430, 130);
+  text("Visual Breathing Guide (1:3)", 430, 120);
   
   // Pulsing Orb Logic (8s cycle: 2s inhale, 6s exhale)
   long cycleTime = 8000;
@@ -342,15 +344,15 @@ void drawMeditationMode() {
   // Draw Orb
   noStroke();
   fill(phaseColor, 40);
-  ellipse(670, 280, orbSize + 30, orbSize + 30); // Outer glow
+  ellipse(670, 240, orbSize + 30, orbSize + 30); // Outer glow
   fill(phaseColor, 180);
-  ellipse(670, 280, orbSize, orbSize);
+  ellipse(670, 240, orbSize, orbSize);
   
   // Phase Text
   textAlign(CENTER);
   fill(phaseColor);
   textSize(32);
-  text(phase, 670, 440);
+  text(phase, 670, 380);
   textAlign(LEFT);
 }
 
@@ -358,7 +360,7 @@ void drawPSCMode() {
   // ── LEFT PANEL: Core Vitals + z-scores + features ────────────────────────
   fill(255);
   noStroke();
-  rect(20, 80, 350, 390, 15);
+  rect(20, 80, 350, 345, 15);
 
   fill(50);
   textSize(20);
@@ -397,7 +399,7 @@ void drawPSCMode() {
   // ── RIGHT PANEL: PSC State + ANS State ────────────────────────────────────
   fill(255);
   noStroke();
-  rect(400, 80, 540, 390, 15);
+  rect(400, 80, 540, 345, 15);
 
   // ─ PSC Header + Help Button ────────────────────────────────────────────────
   fill(50);
@@ -536,7 +538,7 @@ void drawPSCHelpOverlay() {
   textLeading(12);
 
   String[][] ansModes = {
-    {"Fight / Flight", "🔴", "Stress mode is on. Heart up, breathing up."},
+    {"Fight / Flight", "�", "Stress mode is on. Heart up, breathing up."},
     {"Recovery Mode",  "🟢", "Rest mode is on. Heart calm, breathing slow."},
     {"Balanced Mode",  "🔵", "Neither side is dominant. You're neutral."},
     {"Dysregulated",   "🟣", "Can't tell — signals are too chaotic."},
@@ -666,7 +668,15 @@ void drawZScoreBar(float x, float y, String label, float z, color c) {
 
 void drawCalibrateButton() {
   float bx = width - 180;
-  float by = height - 326;
+  // position the button above the resp graph so it stays visible when the graphs
+  // are moved up for the Overview tab.  Use the current y of the respGraph if
+  // available, otherwise fall back to the previous hardcoded value.
+  float defaultBy = height - 326;
+  float by = defaultBy;
+  if (respGraph != null) {
+    // place the button 60 pixels above the top of the respiration graph
+    by = respGraph.y - 60;
+  }
   float bw = 160;
   float bh = 38;
   
@@ -678,14 +688,14 @@ void drawCalibrateButton() {
     fill(255, 100, 100);
     textSize(14);
     textAlign(RIGHT);
-    text("CALIBRATING: " + timeLeft + "s", width - 20, height - 70);
+    text("CALIBRATING: " + timeLeft + "s", width - 20, by - 12);
     textAlign(LEFT);
     fill(255, 200, 200); // Progress color
   } else if (millis() - calibStartTime < 13000 && calibStartTime > 0) { // Show for 3s after 10s calib
     fill(75, 175, 75);
     textSize(14);
     textAlign(RIGHT);
-    text("BREATHING CALIBRATED!", width - 20, height - 70);
+    text("BREATHING CALIBRATED!", width - 20, by - 12);
     textAlign(LEFT);
     fill(100, 200, 100);
   } else {
