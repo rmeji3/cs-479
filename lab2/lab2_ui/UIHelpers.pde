@@ -674,150 +674,104 @@ void drawPSCInfoButton() {
 // PSC INFO PANEL  (full-screen overlay)
 // ─────────────────────────────────────────────
 void drawPSCInfoPanel() {
-  // Dark semi-transparent backdrop
   fill(0, 200);
   noStroke();
   rect(0, 0, width, height);
 
-  // White card
-  float px = 100;
-  float py = 50;
-  float pw = width - 200;
-  float ph = height - 100;
+  float px = 50, py = 90;
+  float pw = width - 280, ph = height - 120;
   fill(255);
   rect(px, py, pw, ph, 18);
 
-  // ── Title bar ──
+  // Title bar
   fill(60, 130, 220);
-  rect(px, py, pw, 50, 18, 18, 0, 0);
+  rect(px, py, pw, 52, 18, 18, 0, 0);
   fill(255);
   textAlign(LEFT, CENTER);
-  textSize(18);
-  text("  PSC Analysis — What does this tab do?", px + 10, py + 25);
+  textSize(21);
+  text("  PSC Analysis — Quick Guide", px + 10, py + 26);
 
-  // ── Body ──
-  float tx = px + 30;
+  float tx = px + 35;
   float ty = py + 70;
-  float tw = pw - 60;
-  float lineH = 20;
+  float tw = pw - 70;
 
-  // Helper: section heading
-  // (inline since Processing doesn't support nested lambdas)
-
-  // --- WHAT IS PSC? ---
-  fill(40, 110, 200);
-  textSize(14);
+  // Intro
+  fill(70);
+  textSize(15);
+  textLeading(22);
   textAlign(LEFT, TOP);
-  text("WHAT IS PSC?", tx, ty);
-  ty += lineH;
+  text("Tracks HR, HRV, Breathing & SpO2 — compares them to your own session history to detect your current body state.", tx, ty, tw, 44);
+  ty += 54;
 
-  fill(60);
-  textSize(13);
-  textLeading(19);
-  String intro = "This tab watches four body signals — Heart Rate (HR), Heart Rate Variability (HRV), " +
-                 "Breathing Rate (RR), and Blood Oxygen (SpO2) — and figures out what state your " +
-                 "body is in right now. It compares each reading to YOUR own recent history " +
-                 "(not a fixed textbook number), so results get more accurate over time.";
-  text(intro, tx, ty, tw, 80);
-  ty += 90;
+  // Two columns
+  float colW = (tw - 20) / 2;
+  float col2x = tx + colW + 20;
 
-  // --- WHAT IS A Z-SCORE? ---
   fill(40, 110, 200);
-  textSize(14);
-  text("WHAT IS A Z-SCORE? (the bars on the left)", tx, ty);
-  ty += lineH;
+  textSize(16);
+  text("BODY STATES", tx, ty);
+  text("ANS TONE", col2x, ty);
+  ty += 24;
 
-  fill(60);
-  textSize(13);
-  String zscore = "A Z-score just says: 'how far is this reading from YOUR normal?' " +
-                  "A bar pointing right means the value is higher than your usual. " +
-                  "Left means lower. The longer the bar, the bigger the change.";
-  text(zscore, tx, ty, tw, 60);
-  ty += 70;
+  stroke(220);
+  line(tx, ty, tx + tw, ty);
+  noStroke();
+  ty += 10;
 
-  // --- STATES TABLE ---
-  fill(40, 110, 200);
-  textSize(14);
-  text("POSSIBLE STATES", tx, ty);
-  ty += lineH + 4;
-
-  // Table rows: {label, color, description}
   Object[][] states = {
-    {"Stable / Rested Stable", color(75, 175, 75),
-     "Everything looks normal. HR, HRV, breathing, and oxygen are all steady."},
-    {"Acute Stress",           color(255, 50, 50),
-     "HR up, HRV down, breathing faster — your body is in fight-or-flight mode."},
-    {"Recovery",               color(0, 200, 150),
-     "HR down, HRV up, breathing slow — your body is actively recovering and resting."},
-    {"Respiratory Strain",     color(100, 150, 255),
-     "Breathing rate is outside the normal range (too fast or too slow), or oxygen is slightly low."},
-    {"Hypoxic Stress",         color(255, 120, 0),
-     "Blood oxygen dropping while heart rate rises — your body is working harder to get oxygen."},
-    {"Autonomic Dysregulation",color(200, 100, 255),
-     "Both HRV and breathing are very irregular — the nervous system is not in a settled rhythm."},
-    {"Autonomic Imbalance",    color(220, 130, 255),
-     "HRV is low even though heart rate looks normal — possible fatigue or poor recovery."},
-    {"Indeterminate",          color(150, 150, 150),
-     "Mixed signals — the system needs more data to make a confident call. Keep monitoring."}
+    {"Stable",         color(75, 175, 75),   "All signals normal."},
+    {"Acute Stress",   color(255, 50, 50),   "HR up, HRV down, fast breathing."},
+    {"Recovery",       color(0, 200, 150),   "HR down, HRV up, slow breathing."},
+    {"Resp. Strain",   color(100, 150, 255), "Breathing outside normal range."},
+    {"Hypoxic Stress", color(255, 120, 0),   "Low oxygen, heart working harder."},
+    {"Dysregulation",  color(200, 100, 255), "HRV & breathing both erratic."},
+    {"Indeterminate",  color(150, 150, 150), "Mixed signals, keep monitoring."}
   };
-
-  float rowH = 28;
-  for (int i = 0; i < states.length; i++) {
-    // Colour dot
-    fill((color) states[i][1]);
-    ellipse(tx + 8, ty + 10, 14, 14);
-
-    // Label (bold-ish)
-    fill(30);
-    textSize(12);
-    //textStyle(BOLD);
-    text((String) states[i][0], tx + 22, ty + 4, 160, rowH);
-    //textStyle(NORMAL);
-
-    // Description
-    fill(90);
-    textSize(11);
-    text((String) states[i][2], tx + 190, ty + 4, tw - 190, rowH + 4);
-    ty += rowH + 2;
-  }
-
-  ty += 8;
-
-  // --- ANS TONE ---
-  fill(40, 110, 200);
-  textSize(14);
-  text("ANS TONE (Autonomic Nervous System)", tx, ty);
-  ty += lineH + 2;
 
   Object[][] ans = {
-    {"Fight / Flight Mode", color(255, 80, 80),
-     "Sympathetic branch is active — body is alert and on guard. Low HRV, fast HR & breathing."},
-    {"Recovery Mode",       color(75, 200, 150),
-     "Parasympathetic branch is active — body is calming down. High HRV, slow HR & breathing."},
-    {"Balanced Mode",       color(100, 180, 255),
-     "Neither branch is strongly dominant. A healthy resting state."},
-    {"Dysregulated Mode",   color(200, 100, 255),
-     "Irregular pattern that doesn't fit either branch — keep monitoring."}
+    {"Fight / Flight", color(255, 80, 80),   "Stressed — low HRV, fast HR."},
+    {"Recovery Mode",  color(75, 200, 150),  "Calm — high HRV, slow HR."},
+    {"Balanced",       color(100, 180, 255), "Healthy resting state."},
+    {"Dysregulated",   color(200, 100, 255), "No clear dominant branch."}
   };
 
-  for (int i = 0; i < ans.length; i++) {
-    fill((color) ans[i][1]);
-    ellipse(tx + 8, ty + 10, 14, 14);
-    fill(30);
-    textSize(12);
-    //textStyle(BOLD);
-    text((String) ans[i][0], tx + 22, ty + 4, 170, rowH);
-    //textStyle(NORMAL);
-    fill(90);
-    textSize(11);
-    text((String) ans[i][2], tx + 200, ty + 4, tw - 200, rowH + 4);
-    ty += rowH + 2;
+  float rowH = 32;
+  int maxRows = max(states.length, ans.length);
+
+  for (int i = 0; i < maxRows; i++) {
+    float ry = ty + i * rowH;
+
+    if (i < states.length) {
+      fill((color) states[i][1]);
+      ellipse(tx + 7, ry + 10, 14, 14);
+      fill(30);
+      textSize(15);
+      text((String) states[i][0], tx + 22, ry + 2, 125, rowH);
+      fill(100);
+      textSize(14);
+      text((String) states[i][2], tx + 155, ry + 2, colW - 155, rowH);
+    }
+
+    if (i < ans.length) {
+      fill((color) ans[i][1]);
+      ellipse(col2x + 7, ry + 10, 14, 14);
+      fill(30);
+      textSize(15);
+      text((String) ans[i][0], col2x + 22, ry + 2, 125, rowH);
+      fill(100);
+      textSize(14);
+      text((String) ans[i][2], col2x + 155, ry + 2, colW - 155, rowH);
+    }
   }
 
-  // ── Close hint ──
-  fill(160);
-  textSize(11);
-  textAlign(CENTER, BOTTOM);
-  text("Click the ? INFO button again to close", px + pw / 2, py + ph - 12);
+  // Z-score footnote
+  float footY = py + ph - 40;
+  stroke(220); line(tx, footY, tx + tw, footY); noStroke();
+  fill(150); textSize(13); textAlign(LEFT, TOP);
+  text("Bars on the left = Z-scores: how far each reading is from YOUR normal. Right = higher, left = lower.", tx, footY + 8, tw, 26);
+
+  // Close hint
+  fill(160); textSize(12); textAlign(CENTER, BOTTOM);
+  text("Click ? INFO again to close", px + pw / 2, py + ph - 10);
   textAlign(LEFT, BASELINE);
 }
