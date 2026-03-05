@@ -25,7 +25,7 @@ int userAge = 22;
 boolean isAgeFocused = false;
 String ageBuffer = "";
 
-boolean pscHelpOpen = true;
+boolean pscHelpOpen = false;
 
 // State Management
 boolean isRestingBaselineComplete = false;
@@ -51,12 +51,7 @@ color sidebarColor = color(210, 255, 210); // Light Mint
 color cardBg = color(255);
 
 // PSC Analysis Variables
-float zHR, zHRV, zRR, zSpO2;
-String pscState = "Stable";
-String pscDesc = "";
-color pscColor = color(100, 200, 100);
-String ansState = "Balanced";
-color ansColor = color(120, 150, 255);
+
 float confidence = 0;
 
 void setup() {
@@ -181,8 +176,10 @@ void draw() {
   popMatrix();
   
   // Waveforms (Absolute Position)
-  ecgGraph.display();
-  respGraph.display();
+  if (!(currentMode.equals("PSC Analysis") && pscHelpOpen)) {
+    ecgGraph.display();
+    respGraph.display();
+  }
   
   // Respiration Calibration Logic (10s window)
   if (isCalibratingResp) {
@@ -224,7 +221,9 @@ void draw() {
   pscUpdate();
   
   // Calibrate Button
+  if (!currentMode.equals("PSC Analysis")) {
   drawCalibrateButton();
+}
   
   // Dev HR buttons only in Overview
   if (currentMode.equals("Overview")) {
@@ -259,29 +258,22 @@ void mousePressed() {
   } 
   isAgeFocused = false;
   
-  // PSC Help button
+  // PSC Help button (button is at x=900 inside translate(240,0), so screen x = 1140)
   if (currentMode.equals("PSC Analysis")) {
-
-  // Help Button (top right)
-  if (mouseX > width - 110 && mouseX < width - 20 &&
-      mouseY > 20 && mouseY < 60) {
-
-    pscHelpOpen = !pscHelpOpen;
-    return;
-  }
-
-  // Close panel if clicking outside
-  if (pscHelpOpen) {
-    boolean insidePanel =
-      (mouseX > 250 && mouseX < width - 50 &&
-       mouseY > 80 && mouseY < height - 50);
-
-    if (!insidePanel) {
-      pscHelpOpen = false;
+    float infoBx = 240 + 900;  // 1140
+    float infoBw = 55;
+    if (mouseX > infoBx && mouseX < infoBx + infoBw &&
+        mouseY > 20      && mouseY < 54) {
+      pscHelpOpen = !pscHelpOpen;
       return;
     }
+    // Close panel when clicking outside the card
+    if (pscHelpOpen) {
+      boolean insideCard = (mouseX > 100 && mouseX < width - 100 &&
+                            mouseY > 50  && mouseY < height - 50);
+      if (!insideCard) { pscHelpOpen = false; return; }
+    }
   }
-}
 
   // Fitness Mode Start/Stop Button
   if (currentMode.equals("Fitness Mode")) {
