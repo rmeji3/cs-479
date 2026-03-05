@@ -4,9 +4,10 @@ import processing.sound.*;
 // Global Variables
 Serial myPort;
 SoundFile calmMusic;
+PImage heartImg;
 String serialDataLine;
 float[] sensorData = new float[8]; // ecgRaw, fsrRaw, bpm, respRate, inhale, exhale, HRV, SpO2
-
+float devHrOffset = 0;
 // Fitness Components
 RealTimeGraph fitnessHrGraph;
 
@@ -82,11 +83,12 @@ void setup() {
   fitnessHrGraph.showTimeTicks = true;
   fitnessHrGraph.autoAdjustX = true; // Shows the whole session
   
-  // Load Music
+  // Load Assets
   try {
     calmMusic = new SoundFile(this, "ClairDeLune.mp3");
+    heartImg = loadImage("heart.png");
   } catch (Exception e) {
-    println("Music file not found: ClairDeLune.mp3");
+    println("Asset missing: heart.png or ClairDeLune.mp3");
   }
   
   restingBaselineStartTime = millis();
@@ -104,9 +106,7 @@ void draw() {
   
   // Music Logic
   if (!currentMode.equals(prevMode)) {
-    if (currentMode.equals("Stress Monitoring")) {
-      if (calmMusic != null) calmMusic.loop();
-    } else if (prevMode.equals("Stress Monitoring")) {
+    if (prevMode.equals("Stress Monitoring")) {
       if (calmMusic != null) calmMusic.stop();
     }
     prevMode = currentMode;
@@ -215,6 +215,9 @@ void draw() {
   
   // Calibrate Button
   drawCalibrateButton();
+  
+  // Dev HR buttons
+  drawDevHRButtons();
 }
 
 void keyPressed() {
@@ -239,29 +242,74 @@ void mousePressed() {
   if (mouseX < 220 && mouseY > ageY - 30 && mouseY < ageY + 30) {
     isAgeFocused = true;
     ageBuffer = str(userAge);
-  } else {
-    isAgeFocused = false;
-  }
+    return;
+  } 
+  isAgeFocused = false;
   
   // PSC Help button
   if (currentMode.equals("PSC Analysis")) {
     if (mouseX > 900 && mouseX < 1000 && mouseY > 22 && mouseY < 52) {
       pscHelpOpen = !pscHelpOpen;
+      return;
     } else if (pscHelpOpen) {
       boolean insidePanel = (mouseX > 260 && mouseX < 1180 && mouseY > 80 && mouseY < 640);
       if (!insidePanel) pscHelpOpen = false;
     }
   }
+
+  // Fitness Mode Start/Stop Button
+  if (currentMode.equals("Fitness Mode")) {
+    if (mouseX > 990 && mouseX < 1160 && mouseY > 20 && mouseY < 60) {
+      isFitnessActive = !isFitnessActive;
+      if (isFitnessActive) {
+        fitnessSessionStartTime = millis();
+        fitnessHrGraph.resetSession();
+      }
+      return;
+    }
+  }
+
+  // Sidebar/Overview Recalculate Button (New Sidebar Location)
+  if (isRestingBaselineComplete) {
+    float rbtnX = 15;
+    float rbtnY = height - 40;
+    float rbtnW = 220 - 30; // 220 is sidebar width
+    float rbtnH = 30;
+    if (mouseX > rbtnX && mouseX < rbtnX + rbtnW && mouseY > rbtnY && mouseY < rbtnY + rbtnH) {
+      isRestingBaselineComplete = false;
+      restingBaselineStartTime = millis();
+      return;
+    }
+  }
   
-  // Check if clicking Calibrate Button (Updated match to visual location above ECG graph)
-  if (mouseX > width - 180 && mouseX < width - 20 && mouseY > height - 326 && mouseY < height - 288) {
+  // Check if clicking Calibrate Button (Dynamic position)
+  float bx = width - 180;
+  float by = height - 326;
+  if (respGraph != null) by = respGraph.y - 60;
+  float bw = 160;
+  float bh = 38;
+  
+  if (mouseX > bx && mouseX < bx + bw && mouseY > by && mouseY < by + bh) {
     if (!isCalibratingResp) {
       isCalibratingResp = true;
       calibStartTime = millis();
       tempMin = 1024;
       tempMax = 0;
       if (myPort != null) myPort.write('c'); 
+      return;
     }
+  }
+  
+  // Check Dev HR Buttons
+  float devBtnW = 30;
+  float devBtnH = 30;
+  float devBx1 = width - 180;
+  float devBy = height - 380;
+  if (respGraph != null) devBy = respGraph.y - 100;
+  float devBx2 = devBx1 + devBtnW + 10;
+  if (mouseY > devBy && mouseY < devBy + devBtnH) {
+    if (mouseX > devBx1 && mouseX < devBx1 + devBtnW) devHrOffset -= 10; // Minus
+    else if (mouseX > devBx2 && mouseX < devBx2 + devBtnW) devHrOffset += 10; // Plus
   }
 }
 
@@ -284,7 +332,11 @@ void serialEvent(Serial p) {
         
         if (valid) {
           for (int i = 0; i < min(list.length, 8); i++) {
-            sensorData[i] = temp[i];
+            if (i == 2) {
+              sensorData[i] = temp[i] + devHrOffset;
+            } else {
+              sensorData[i] = temp[i];
+            }
           }
         }
       }
@@ -296,7 +348,7 @@ void serialEvent(Serial p) {
 
 void simulateData() {
   // Realistic ECG simulation (Narrow spike at 80bpm)
-  float bpmSim = 80;
+  float bpmSim = 80 + devHrOffset;
   float period = (60.0/bpmSim) * 60; // frames at 60fps
   float t = frameCount % period;
   float pulse = 0;

@@ -23,14 +23,6 @@ void drawHeader() {
     textAlign(CENTER);
     text(isFitnessActive ? "STOP" : "START", 835, 47);
     textAlign(LEFT);
-    
-    if (btnHover && mousePressed && frameCount % 15 == 0) {
-      isFitnessActive = !isFitnessActive;
-      if (isFitnessActive) {
-        fitnessSessionStartTime = millis();
-        fitnessHrGraph.resetSession();
-      }
-    }
   }
 }
 
@@ -60,49 +52,6 @@ void drawOverview() {
     textAlign(CENTER);
     text("CALCULATING: " + timeLeft + "s left", 220, 315);
     textAlign(LEFT);
-  } else {
-    // 1. Position and Size (Consistent)
-    int btnX = 150;
-    int btnY = 255; 
-    int btnW = 150;
-    int btnH = 30;
-
-    // 2. Hover Logic
-    boolean btnHover = (
-      mouseX - 240 > btnX &&
-      mouseX - 240 < btnX + btnW &&
-      mouseY > btnY &&
-      mouseY < btnY + btnH
-);
-    
-    // 3. Draw the Button
-    // Added a slight "click" color change for feedback
-    if (btnHover && mousePressed) {
-        fill(100, 200); // Darker when clicking
-    } else {
-        fill(btnHover ? 200 : 255, 200); 
-    }
-    
-    stroke(200);
-    rect(btnX, btnY, btnW, btnH, 5);
-    
-    // 4. Text (Perfectly centered)
-    fill(80);
-    textSize(11);
-    textAlign(CENTER, CENTER);
-    text("RECALCULATE", btnX + (btnW / 2), btnY + (btnH / 2));
-    
-    // Reset alignment so other text in your UI doesn't break
-    textAlign(LEFT, BASELINE); 
-    
-    // 5. Action Logic
-    // Use a 'toggle' or check for a single click to prevent multiple resets per click
-    if (btnHover && mousePressed) {
-        if (isRestingBaselineComplete) { // Only reset if it's not already resetting
-            isRestingBaselineComplete = false;
-            restingBaselineStartTime = millis();
-        }
-    }
   }
   drawStatItem(20, 320, "Respiratory Rate", sensorData[3], "br/m", color(100, 150, 255));
   
@@ -242,7 +191,7 @@ void drawStressMode() {
   if (calmMusic != null && calmMusic.isPlaying()) {
     fill(100, 150, 255);
     textSize(16);
-    text("\u266B Now Playing: Clair De Lune", 430, 150);
+    text("Now Playing: Clair De Lune", 430, 150);
   } else {
     fill(150);
     textSize(16);
@@ -413,7 +362,7 @@ void drawPSCMode() {
   fill(pscHelpOpen ? 255 : 60);
   textSize(13);
   textAlign(CENTER);
-  text(pscHelpOpen ? "✕ Close" : "? Help", 710, 42);
+  text(pscHelpOpen ? "Close" : "Help", 710, 42);
   textAlign(LEFT);
 
   // PSC State box
@@ -474,9 +423,9 @@ void drawPSCHelpOverlay() {
   fill(30);
   textSize(20);
   textAlign(LEFT);
-  text("How to read this screen — plain and simple", 45, 120);
+  text("How to read this screen -- plain and simple", 45, 120);
   
-  // ── SECTION 1 ──────────────────────────────────────────────────────────────
+  // -- SECTION 1 --------------------------------------------------------------
   fill(80, 140, 220);
   rect(45, 135, 4, 85);
   fill(30);
@@ -487,23 +436,23 @@ void drawPSCHelpOverlay() {
   textLeading(18);
   text("PHYSIOLOGICAL STATE tells you what your body is doing right now.", 58, 172);
   text("ANS STATE tells you which part of your nervous system is in charge.", 58, 190);
-  text("Both update live — just watch them change.", 58, 208);
+  text("Both update live -- just watch them change.", 58, 208);
   textLeading(12);
 
-  // ── SECTION 2: PSC state table ─────────────────────────────────────────────
+  // -- SECTION 2: PSC state table ---------------------------------------------
   fill(30);
   textSize(14);
   text("What each state means", 45, 238);
   
   String[][] rows = {
-    {"Rested Stable",           "🟢", "Everything is calm. Your body is happy."},
-    {"Recovery",                "🔵", "Coming down from activity. Body is healing."},
-    {"Acute Stress",            "🔴", "Heart rate up, breathing fast. You're stressed."},
-    {"Respiratory Strain",      "🟡", "Breathing is too fast or too slow. Focus on slowing it down."},
-    {"Hypoxic Stress",          "🟠", "Oxygen level dropping. Breathe slower and deeper."},
-    {"Dysregulated State",      "🔴", "Oxygen low AND heart racing — most severe. Rest immediately."},
-    {"Autonomic Imbalance",     "🟣", "Low HRV at rest — possible fatigue or overtraining."},
-    {"Autonomic Dysregulation", "🟣", "Signals are erratic — nervous system is unstable."},
+    {"Rested Stable",           "STABLE", "Everything is calm. Your body is happy."},
+    {"Recovery",                "RECOV",  "Coming down from activity. Body is healing."},
+    {"Acute Stress",            "STRESS", "Heart rate up, breathing fast. You're stressed."},
+    {"Respiratory Strain",      "STRAIN", "Breathing is too fast or too slow. Focus on slowing it down."},
+    {"Hypoxic Stress",          "HYPOX",  "Oxygen level dropping. Breathe slower and deeper."},
+    {"Dysregulated State",      "ALERT",  "Oxygen low AND heart racing -- most severe. Rest immediately."},
+    {"Autonomic Imbalance",     "IMBAL",  "Low HRV at rest -- possible fatigue or overtraining."},
+    {"Autonomic Dysregulation", "ALERT",  "Signals are erratic -- nervous system is unstable."},
   };
   
   float rowY = 255;
@@ -522,13 +471,13 @@ void drawPSCHelpOverlay() {
     rowY += 22;
   }
 
-  // ── SECTION 3: ANS modes ────────────────────────────────────────────────────
+  // -- SECTION 3: ANS modes ----------------------------------------------------
   float col2X = 490;
   fill(80, 140, 220);
   rect(col2X, 135, 4, 85);
   fill(30);
   textSize(14);
-  text("ANS modes — which side is winning?", col2X + 13, 153);
+  text("ANS modes -- which side is winning?", col2X + 13, 153);
   fill(90);
   textSize(12);
   textLeading(18);
@@ -538,10 +487,10 @@ void drawPSCHelpOverlay() {
   textLeading(12);
 
   String[][] ansModes = {
-    {"Fight / Flight", "�", "Stress mode is on. Heart up, breathing up."},
-    {"Recovery Mode",  "🟢", "Rest mode is on. Heart calm, breathing slow."},
-    {"Balanced Mode",  "🔵", "Neither side is dominant. You're neutral."},
-    {"Dysregulated",   "🟣", "Can't tell — signals are too chaotic."},
+    {"Fight / Flight", "STRESS", "Stress mode is on. Heart up, breathing up."},
+    {"Recovery Mode",  "RECOV",  "Rest mode is on. Heart calm, breathing slow."},
+    {"Balanced Mode",  "BAL",    "Neither side is dominant. You're neutral."},
+    {"Dysregulated",   "ALERT",  "Can't tell -- signals are too chaotic."},
   };
   
   rowY = 255;
@@ -560,7 +509,7 @@ void drawPSCHelpOverlay() {
     rowY += 22;
   }
 
-  // ── SECTION 4: The bars ─────────────────────────────────────────────────────
+  // -- SECTION 4: The bars -----------------------------------------------------
   fill(30);
   textSize(13);
   text("The small bars on the left (HR / HRV / SpO2 / RR)", 45, 447);
@@ -568,7 +517,7 @@ void drawPSCHelpOverlay() {
   textSize(12);
   text("Each bar shows if that signal is higher or lower than YOUR average for this session.", 45, 463);
   text("Bar goes right = rising above your normal.   Bar goes left = dropping below your normal.", 45, 479);
-  text("The app learns your baseline as you use it — comparisons are personal to you, not a population average.", 45, 495);
+  text("The app learns your baseline as you use it -- comparisons are personal to you, not a population average.", 45, 495);
 
   fill(140);
   textSize(11);
@@ -592,9 +541,9 @@ void drawStatItem(float x, float y, String label, float val, String unit, color 
   rect(x, y, 400, 95, 15); // Height reduced to 95 
   
   // Icon/Imagery Logic based on reference image
-  String icon = "️";
-  if (label.contains("Resting")) icon = " ";
-  if (label.contains("Respiratory") || label.contains("Resp")) icon = " ";
+  String icon = "--";
+  if (label.contains("Resting")) icon = "R";
+  if (label.contains("Respiratory") || label.contains("Resp")) icon = "B";
   
   // Icon Circle on the Right (as seen in UI reference)
   fill(c, 40); 
@@ -602,7 +551,13 @@ void drawStatItem(float x, float y, String label, float val, String unit, color 
   fill(c);
   textSize(28);
   textAlign(CENTER, CENTER);
-  text(icon, x + 350, y + 45);
+  if (label.equals("Current Heart Rate") && heartImg != null) {
+    imageMode(CENTER);
+    image(heartImg, x + 350, y + 47, 35, 35);
+    imageMode(CORNER);
+  } else {
+    text(icon, x + 350, y + 45);
+  }
   
   // Adjusted Text Positions (Moved Up)
   textAlign(LEFT, TOP);
@@ -682,22 +637,16 @@ void drawCalibrateButton() {
   
   boolean hover = (mouseX > bx && mouseX < bx + bw && mouseY > by && mouseY < by + bh);
   
+  String buttonText = "CALIBRATE BREATH";
+  
   // Display Message or Countdown
   if (isCalibratingResp) {
     int timeLeft = 10 - int((millis() - calibStartTime) / 1000);
-    fill(255, 100, 100);
-    textSize(14);
-    textAlign(RIGHT);
-    text("CALIBRATING: " + timeLeft + "s", width - 20, by - 12);
-    textAlign(LEFT);
     fill(255, 200, 200); // Progress color
+    buttonText = "CALIBRATING: " + timeLeft + "s";
   } else if (millis() - calibStartTime < 13000 && calibStartTime > 0) { // Show for 3s after 10s calib
-    fill(75, 175, 75);
-    textSize(14);
-    textAlign(RIGHT);
-    text("BREATHING CALIBRATED!", width - 20, by - 12);
-    textAlign(LEFT);
     fill(100, 200, 100);
+    buttonText = "CALIBRATED!";
   } else {
     fill(hover ? 200 : 230);
   }
@@ -708,6 +657,41 @@ void drawCalibrateButton() {
   fill(50);
   textSize(14);
   textAlign(CENTER);
-  text(isCalibratingResp ? "CALIBRATING..." : "CALIBRATE BREATH", bx + bw/2, by + 25);
+  text(buttonText, bx + bw/2, by + 25);
   textAlign(LEFT);
+}
+
+void drawDevHRButtons() {
+  float btnW = 30;
+  float btnH = 30;
+  float bx1 = width - 180;
+  float defaultBy = height - 380;
+  float by = defaultBy;
+  if (respGraph != null) {
+    by = respGraph.y - 100;
+  }
+  float bx2 = bx1 + btnW + 10;
+  
+  // Minus Button
+  boolean hover1 = mouseX > bx1 && mouseX < bx1 + btnW && mouseY > by && mouseY < by + btnH;
+  fill(hover1 ? 200 : 230);
+  noStroke();
+  rect(bx1, by, btnW, btnH, 5);
+  fill(50);
+  textSize(18);
+  textAlign(CENTER, CENTER);
+  text("-", bx1 + btnW/2, by + btnH/2 - 2);
+  
+  // Plus Button
+  boolean hover2 = mouseX > bx2 && mouseX < bx2 + btnW && mouseY > by && mouseY < by + btnH;
+  fill(hover2 ? 200 : 230);
+  rect(bx2, by, btnW, btnH, 5);
+  fill(50);
+  text("+", bx2 + btnW/2, by + btnH/2 - 2);
+  
+  // Label
+  textAlign(LEFT, BASELINE);
+  textSize(12);
+  fill(100);
+  text("Dev HR", bx1, by - 5);
 }

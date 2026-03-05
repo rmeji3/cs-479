@@ -67,5 +67,24 @@ class Sidebar {
     String ageDisplay = isAgeFocused ? ageBuffer + "|" : str(userAge) + " yrs";
     text(ageDisplay, w/2, ageY + 8);
     textAlign(LEFT);
+
+    // Recalculate Button below Age Input
+    if (isRestingBaselineComplete) {
+      float btnX = 15;
+      float btnY = height - 40;
+      float btnW = w - 30;
+      float btnH = 30;
+      boolean btnHover = (mouseX > btnX && mouseX < btnX + btnW && mouseY > btnY && mouseY < btnY + btnH);
+      
+      fill(btnHover ? color(255, 200) : color(255, 100));
+      if (btnHover && mousePressed) fill(200, 150);
+      rect(btnX, btnY, btnW, btnH, 8);
+      
+      fill(10, 80, 10);
+      textSize(11);
+      textAlign(CENTER, CENTER);
+      text("RECALCULATE HR", btnX + btnW/2, btnY + btnH/2);
+      textAlign(LEFT, BASELINE);
+    }
   }
 }
