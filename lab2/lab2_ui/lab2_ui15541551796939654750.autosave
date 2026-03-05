@@ -12,6 +12,7 @@ float devHrOffset = 0;
 RealTimeGraph fitnessHrGraph;
 
 // PSC Help Dropdown
+boolean showInfo = false;
 
 // UI Components
 Sidebar leftSidebar;
@@ -51,12 +52,7 @@ color sidebarColor = color(210, 255, 210); // Light Mint
 color cardBg = color(255);
 
 // PSC Analysis Variables
-float zHR, zHRV, zRR, zSpO2;
-String pscState = "Stable";
-String pscDesc = "";
-color pscColor = color(100, 200, 100);
-String ansState = "Balanced";
-color ansColor = color(120, 150, 255);
+
 float confidence = 0;
 
 void setup() {
@@ -108,6 +104,16 @@ void setup() {
   calibStartTime = millis();
   tempMin = 1024;
   tempMax = 0;
+}
+void drawInfoButton() {
+  fill(30, 140, 220);
+  noStroke();
+  ellipse(width - 40, 40, 35, 35);
+
+  fill(255);
+  textAlign(CENTER, CENTER);
+  textSize(18);
+  text("i", width - 40, 40);
 }
 
 void draw() {
@@ -230,7 +236,11 @@ void draw() {
   if (currentMode.equals("Overview")) {
     drawDevHRButtons();
   }
+  drawInfoButton();
 
+if (showInfo) {
+  drawInfoMenu();
+}
 }
 
 void keyPressed() {

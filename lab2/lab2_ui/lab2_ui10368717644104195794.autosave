@@ -12,6 +12,7 @@ float devHrOffset = 0;
 RealTimeGraph fitnessHrGraph;
 
 // PSC Help Dropdown
+boolean showInfo = false;
 
 // UI Components
 Sidebar leftSidebar;
@@ -24,8 +25,6 @@ String prevMode = "Overview";
 int userAge = 22; 
 boolean isAgeFocused = false;
 String ageBuffer = "";
-
-boolean pscHelpOpen = true;
 
 // State Management
 boolean isRestingBaselineComplete = false;
@@ -51,12 +50,7 @@ color sidebarColor = color(210, 255, 210); // Light Mint
 color cardBg = color(255);
 
 // PSC Analysis Variables
-float zHR, zHRV, zRR, zSpO2;
-String pscState = "Stable";
-String pscDesc = "";
-color pscColor = color(100, 200, 100);
-String ansState = "Balanced";
-color ansColor = color(120, 150, 255);
+
 float confidence = 0;
 
 void setup() {
@@ -108,6 +102,16 @@ void setup() {
   calibStartTime = millis();
   tempMin = 1024;
   tempMax = 0;
+}
+void drawInfoButton() {
+  fill(30, 140, 220);
+  noStroke();
+  ellipse(width - 40, 40, 35, 35);
+
+  fill(255);
+  textAlign(CENTER, CENTER);
+  textSize(18);
+  text("i", width - 40, 40);
 }
 
 void draw() {
@@ -230,9 +234,82 @@ void draw() {
   if (currentMode.equals("Overview")) {
     drawDevHRButtons();
   }
+  drawInfoButton();
 
+if (showInfo) {
+  drawInfoMenu();
+}
 }
 
+void drawInfoMenu() {
+
+  fill(0, 180); // dark overlay
+  rect(0, 0, width, height);
+
+  fill(255);
+  rect(150, 60, width - 300, height - 120, 20);
+
+  fill(30);
+  textAlign(LEFT, TOP);
+  textSize(20);
+  text("Physiological State Classifier (PSC)", 180, 90);
+
+  textSize(13);
+  textLeading(18);
+
+  String infoText =
+  "WHAT IS PSC?\n" +
+  "The Physiological State Classifier analyzes heart rate (HR), heart rate variability (HRV), respiration rate (RR), and oxygen saturation (SpO₂).\n\n" +
+  "It uses deviation from your session baseline (Z-scores) to detect physiological stress or recovery states.\n\n" +
+
+  "PSC STATES:\n\n" +
+
+  "1. STABLE\n" +
+  "All metrics near baseline.\n" +
+  "HR normal, HRV balanced, breathing steady, oxygen stable.\n\n" +
+
+  "2. ACUTE STRESS\n" +
+  "HR ↑  |  HRV ↓  |  RR ↑\n" +
+  "Indicates sympathetic activation (fight-or-flight).\n\n" +
+
+  "3. RECOVERY\n" +
+  "HR ↓  |  HRV ↑  |  RR ↓\n" +
+  "Indicates parasympathetic dominance (rest-and-digest).\n\n" +
+
+  "4. RESPIRATORY STRAIN\n" +
+  "SpO₂ ↓  |  RR ↑\n" +
+  "Body compensates for reduced oxygen by increasing breathing rate.\n\n" +
+
+  "5. HYPOXIC STRESS\n" +
+  "HR ↑  |  SpO₂ ↓\n" +
+  "Heart increases output due to reduced oxygen availability.\n\n" +
+
+  "6. DYSREGULATED STATE\n" +
+  "HRV highly unstable  |  RR irregular\n" +
+  "Indicates autonomic imbalance or unstable cardiorespiratory coupling.\n\n" +
+
+  "ANS TONE (Autonomic Nervous System):\n\n" +
+
+  "CALM\n" +
+  "High HRV + slow breathing\n" +
+  "Parasympathetic dominance.\n\n" +
+
+  "AROUSED\n" +
+  "Low HRV + fast breathing\n" +
+  "Sympathetic dominance.\n\n" +
+
+  "BALANCED\n" +
+  "HRV and breathing within normal range.\n" +
+  "Healthy autonomic equilibrium.";
+
+  text(infoText, 180, 130, width - 340, height - 200);
+
+  // Close hint
+  fill(120);
+  textSize(11);
+  textAlign(CENTER);
+  text("Click the info button again to close", width/2, height - 40);
+}
 void keyPressed() {
   if (isAgeFocused) {
     if (key >= '0' && key <= '9') {

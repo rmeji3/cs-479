@@ -12,6 +12,7 @@ float devHrOffset = 0;
 RealTimeGraph fitnessHrGraph;
 
 // PSC Help Dropdown
+boolean pscHelpOpen = false;
 
 // UI Components
 Sidebar leftSidebar;
@@ -24,8 +25,6 @@ String prevMode = "Overview";
 int userAge = 22; 
 boolean isAgeFocused = false;
 String ageBuffer = "";
-
-boolean pscHelpOpen = true;
 
 // State Management
 boolean isRestingBaselineComplete = false;
@@ -51,12 +50,7 @@ color sidebarColor = color(210, 255, 210); // Light Mint
 color cardBg = color(255);
 
 // PSC Analysis Variables
-float zHR, zHRV, zRR, zSpO2;
-String pscState = "Stable";
-String pscDesc = "";
-color pscColor = color(100, 200, 100);
-String ansState = "Balanced";
-color ansColor = color(120, 150, 255);
+
 float confidence = 0;
 
 void setup() {
@@ -230,7 +224,6 @@ void draw() {
   if (currentMode.equals("Overview")) {
     drawDevHRButtons();
   }
-
 }
 
 void keyPressed() {
@@ -261,27 +254,14 @@ void mousePressed() {
   
   // PSC Help button
   if (currentMode.equals("PSC Analysis")) {
-
-  // Help Button (top right)
-  if (mouseX > width - 110 && mouseX < width - 20 &&
-      mouseY > 20 && mouseY < 60) {
-
-    pscHelpOpen = !pscHelpOpen;
-    return;
-  }
-
-  // Close panel if clicking outside
-  if (pscHelpOpen) {
-    boolean insidePanel =
-      (mouseX > 250 && mouseX < width - 50 &&
-       mouseY > 80 && mouseY < height - 50);
-
-    if (!insidePanel) {
-      pscHelpOpen = false;
+    if (mouseX > 900 && mouseX < 1000 && mouseY > 22 && mouseY < 52) {
+      pscHelpOpen = !pscHelpOpen;
       return;
+    } else if (pscHelpOpen) {
+      boolean insidePanel = (mouseX > 260 && mouseX < 1180 && mouseY > 80 && mouseY < 640);
+      if (!insidePanel) pscHelpOpen = false;
     }
   }
-}
 
   // Fitness Mode Start/Stop Button
   if (currentMode.equals("Fitness Mode")) {

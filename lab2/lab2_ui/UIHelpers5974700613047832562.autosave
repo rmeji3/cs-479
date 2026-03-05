@@ -306,11 +306,10 @@ void drawMeditationMode() {
 }
 
 void drawPSCMode() {
-
-  // Update PSC states
+  // Update PSC states with live sensor data
   updatePSCMetrics();
 
-  // ================= LEFT PANEL =================
+  // LEFT PANEL: PSC and ANS State Display
   fill(255);
   noStroke();
   rect(20, 80, 420, 400, 15);
@@ -332,6 +331,7 @@ void drawPSCMode() {
   text("Confidence: " + int(confidence) + "%", 40, 260);
 
   stroke(220);
+  strokeWeight(1);
   line(40, 280, 400, 280);
   noStroke();
 
@@ -343,25 +343,25 @@ void drawPSCMode() {
   textSize(36);
   text(ansState, 40, 350);
 
-  // Z Score Bars
+  // Z-Score Bars
   drawPSCZScoreBar(40, 380, "HR", zHR, color(220, 70, 70));
   drawPSCZScoreBar(40, 400, "HRV", zHRV, color(70, 160, 220));
   drawPSCZScoreBar(40, 420, "RR", zRR, color(255, 140, 0));
   drawPSCZScoreBar(40, 440, "SpO2", zSpO2, color(0, 180, 120));
 
-  // ================= RIGHT PANEL =================
+  // RIGHT PANEL: Live Metrics
   fill(255);
+  noStroke();
   rect(480, 80, 480, 400, 15);
 
   fill(40);
   textSize(20);
   text("Current Metrics", 500, 115);
 
-  drawStatItem(500, 155, "Heart Rate", sensorData[2], "bpm", color(255, 100, 100));
-  drawStatItem(500, 265, "HRV", sensorData[6], "ms", color(70, 160, 220));
-  drawStatItem(500, 375, "Resp Rate", sensorData[3], "br/m", color(255, 140, 0));
-
-
+  drawPSCMetric(500, 160, "Heart Rate", sensorData[2], "bpm");
+  drawPSCMetric(500, 210, "HRV", sensorData[6], "ms");
+  drawPSCMetric(500, 260, "Resp Rate", sensorData[3], "rpm");
+  drawPSCMetric(500, 310, "SpO2", sensorData[7], "%");
 }
 
 // ===============================
@@ -444,8 +444,17 @@ void classifyANSTone() {
 // ===============================
 // UI HELPER FUNCTIONS
 // ===============================
-void drawPSCZScoreBar(float x, float y, String label, float z, color c) {
+void drawPSCMetric(float x, float y, String label, float val, String unit) {
+  fill(70);
+  textSize(14);
+  text(label, x, y);
 
+  fill(20);
+  textSize(28);
+  text(nf(val, 1, 1) + " " + unit, x, y + 30);
+}
+
+void drawPSCZScoreBar(float x, float y, String label, float z, color c) {
   float barWidth = 200;
   float centerX = x + 80;
 
@@ -459,7 +468,6 @@ void drawPSCZScoreBar(float x, float y, String label, float z, color c) {
   float scaled = constrain(z * 25, -barWidth / 2, barWidth / 2);
 
   fill(c);
-
   if (scaled >= 0)
     rect(centerX + barWidth / 2, y, scaled, 12, 4);
   else
@@ -472,7 +480,6 @@ void drawPSCZScoreBar(float x, float y, String label, float z, color c) {
   textSize(11);
   text(nf(z, 1, 2), centerX + barWidth + 10, y + 10);
 }
-
 void drawPSCStat(float x, float y, String label, int val, String unit) {
   fill(100);
   textSize(16);

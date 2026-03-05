@@ -23,13 +23,10 @@ class RealTimeGraph {
     this.yMax = yMax;
 
     if (title != null && title.toLowerCase().indexOf("ecg") >= 0) {
-<<<<<<< HEAD
       this.yMin = 100;
       this.yMax = 500;
-=======
       this.yMin = 400;
       this.yMax = 580;
->>>>>>> 4caf72373bb0707789af68b9bdc954524f46af63
     }
 
     values = new float[int(w)];
@@ -139,7 +136,7 @@ class RealTimeGraph {
 
     // Time Ticks (X-axis) - RESTORED
     if (showTimeTicks) {
-      fill(0); // Black for fitness mode
+      fill(150);
       textSize(11);
       textAlign(CENTER);
       // Vertical offset for the ticks (just below the bottom border)

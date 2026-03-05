@@ -361,7 +361,93 @@ void drawPSCMode() {
   drawStatItem(500, 265, "HRV", sensorData[6], "ms", color(70, 160, 220));
   drawStatItem(500, 375, "Resp Rate", sensorData[3], "br/m", color(255, 140, 0));
 
+  // Draw INFO button
+  drawPSCHelpButton();
 
+  // Draw info panel if open
+  drawInfoMenu();
+}
+void drawPSCHelpButton() {
+  fill(40, 130, 220);
+  noStroke();
+  rect(width - 110, 20, 90, 40, 10);
+
+  fill(255);
+  textAlign(CENTER, CENTER);
+  textSize(14);
+  text("INFO", width - 65, 40);
+
+  textAlign(LEFT, BASELINE);
+}
+
+void drawInfoMenu() {
+
+  fill(0, 180); // dark overlay
+  rect(0, 0, width, height);
+
+  fill(255);
+  rect(150, 60, width - 300, height - 120, 20);
+
+  fill(30);
+  textAlign(LEFT, TOP);
+  textSize(20);
+  text("Physiological State Classifier (PSC)", 180, 90);
+
+  textSize(13);
+  textLeading(18);
+
+  String infoText =
+  "WHAT IS PSC?\n" +
+  "The Physiological State Classifier analyzes heart rate (HR), heart rate variability (HRV), respiration rate (RR), and oxygen saturation (SpO₂).\n\n" +
+  "It uses deviation from your session baseline (Z-scores) to detect physiological stress or recovery states.\n\n" +
+
+  "PSC STATES:\n\n" +
+
+  "1. STABLE\n" +
+  "All metrics near baseline.\n" +
+  "HR normal, HRV balanced, breathing steady, oxygen stable.\n\n" +
+
+  "2. ACUTE STRESS\n" +
+  "HR ↑  |  HRV ↓  |  RR ↑\n" +
+  "Indicates sympathetic activation (fight-or-flight).\n\n" +
+
+  "3. RECOVERY\n" +
+  "HR ↓  |  HRV ↑  |  RR ↓\n" +
+  "Indicates parasympathetic dominance (rest-and-digest).\n\n" +
+
+  "4. RESPIRATORY STRAIN\n" +
+  "SpO₂ ↓  |  RR ↑\n" +
+  "Body compensates for reduced oxygen by increasing breathing rate.\n\n" +
+
+  "5. HYPOXIC STRESS\n" +
+  "HR ↑  |  SpO₂ ↓\n" +
+  "Heart increases output due to reduced oxygen availability.\n\n" +
+
+  "6. DYSREGULATED STATE\n" +
+  "HRV highly unstable  |  RR irregular\n" +
+  "Indicates autonomic imbalance or unstable cardiorespiratory coupling.\n\n" +
+
+  "ANS TONE (Autonomic Nervous System):\n\n" +
+
+  "CALM\n" +
+  "High HRV + slow breathing\n" +
+  "Parasympathetic dominance.\n\n" +
+
+  "AROUSED\n" +
+  "Low HRV + fast breathing\n" +
+  "Sympathetic dominance.\n\n" +
+
+  "BALANCED\n" +
+  "HRV and breathing within normal range.\n" +
+  "Healthy autonomic equilibrium.";
+
+  text(infoText, 180, 130, width - 340, height - 200);
+
+  // Close hint
+  fill(120);
+  textSize(11);
+  textAlign(CENTER);
+  text("Click the info button again to close", width/2, height - 40);
 }
 
 // ===============================
@@ -607,6 +693,7 @@ void drawCalibrateButton() {
   text(buttonText, bx + bw/2, by + 25);
   textAlign(LEFT);
 }
+float confidence = 0;
 
 void drawDevHRButtons() {
   float btnW = 30;
