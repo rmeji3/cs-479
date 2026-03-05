@@ -119,63 +119,30 @@ void draw() {
   
   leftSidebar.display();
   
+  // Fixed graph position — same across all tabs
+  ecgGraph.x  = 260; ecgGraph.y  = 510; ecgGraph.w  = 440; ecgGraph.h  = 240;
+  respGraph.x = 740; respGraph.y = 510; respGraph.w = 440; respGraph.h = 240;
+  
   pushMatrix();
-  translate(240, 0); 
+  translate(240, 0);
   drawHeader();
   
   if (currentMode.equals("Overview")) {
     drawOverview();
-    // Use the same graph sizes and positions as other tabs for consistency
-    ecgGraph.x = 260;
-    ecgGraph.y = 480;
-    ecgGraph.w = 440;
-    ecgGraph.h = 240;
-
-    respGraph.x = 740;
-    respGraph.y = 480;
-    respGraph.w = 440;
-    respGraph.h = 240;
   } else if (currentMode.equals("Fitness Mode")) {
     drawFitnessMode();
-    // Only update the trend graph if the session is ACTIVE
-    if (isFitnessActive) {
-      fitnessHrGraph.update(sensorData[2]);
-    }
+    if (isFitnessActive) fitnessHrGraph.update(sensorData[2]);
     fitnessHrGraph.display();
-    
-    ecgGraph.y = 500;
-    respGraph.y = 500;
-    // restore default dimensions & x position in other modes
-    ecgGraph.w = 440;
-    ecgGraph.h = 240;
-    ecgGraph.x = 260;
-    respGraph.w = 440;
-    respGraph.h = 240;
-    respGraph.x = 740;
   } else if (currentMode.equals("PSC Analysis")) {
     drawPSCMode();
-    ecgGraph.y = 520;
-    respGraph.y = 520;
-    ecgGraph.w = 440;
-    ecgGraph.h = 240;
-    ecgGraph.x = 260;
-    respGraph.w = 440;
-    respGraph.h = 240;
   } else {
     if (currentMode.equals("Stress Monitoring")) drawStressMode();
     else if (currentMode.equals("Meditation Monitoring")) drawMeditationMode();
-    ecgGraph.y = 520;
-    respGraph.y = 520;
-    ecgGraph.w = 440;
-    ecgGraph.h = 240;
-    ecgGraph.x = 260;
-    respGraph.w = 440;
-    respGraph.h = 240;
   }
   
   popMatrix();
   
-  // Waveforms (Absolute Position)
+  // Waveforms — hidden when PSC info panel is open
   if (!(currentMode.equals("PSC Analysis") && pscHelpOpen)) {
     ecgGraph.display();
     respGraph.display();
@@ -185,31 +152,23 @@ void draw() {
   if (isCalibratingResp) {
     long elapsed = millis() - calibStartTime;
     if (elapsed < 10000) {
-      // Track peaks and valleys
       if (sensorData[1] > tempMax) tempMax = sensorData[1];
       if (sensorData[1] < tempMin) tempMin = sensorData[1];
       respGraph.setStatus("CALIBRATING...");
     } else {
-      // Finish calibration
       isCalibratingResp = false;
-      // Set thresholds with a bit of buffer
       float range = tempMax - tempMin;
-      if (range > 20) { 
+      if (range > 20) {
         respInhaleThreshold = tempMin + (range * 0.7);
         respExhaleThreshold = tempMin + (range * 0.3);
-        
-        // Auto-Scale the graph to the user's range
         respGraph.yMin = max(0, tempMin - 50);
         respGraph.yMax = min(1023, tempMax + 50);
-        
-        // Sync visual markers
         respGraph.upperThresh = respInhaleThreshold;
         respGraph.lowerThresh = respExhaleThreshold;
       }
       respGraph.setStatus("");
     }
   } else {
-    // Regular Status Detection using calibrated thresholds
     if (sensorData[1] > respInhaleThreshold) respGraph.setStatus("Inhaling...");
     else if (sensorData[1] < respExhaleThreshold) respGraph.setStatus("Exhaling...");
     else respGraph.setStatus("");
@@ -220,16 +179,15 @@ void draw() {
   
   pscUpdate();
   
-  // Calibrate Button
+  // Calibrate button — hidden on PSC Analysis tab
   if (!currentMode.equals("PSC Analysis")) {
-  drawCalibrateButton();
-}
+    drawCalibrateButton();
+  }
   
   // Dev HR buttons only in Overview
   if (currentMode.equals("Overview")) {
     drawDevHRButtons();
   }
-
 }
 
 void keyPressed() {
