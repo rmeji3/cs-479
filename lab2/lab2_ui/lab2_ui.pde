@@ -32,6 +32,7 @@ boolean isRestingBaselineComplete = false;
 long restingBaselineStartTime = 0;
 float restingBPM = 0;
 float restingResp = 0;
+boolean lastStateStressed = false; 
 
 boolean isFitnessActive = false;
 long fitnessSessionStartTime = 0;
@@ -184,10 +185,12 @@ void draw() {
     drawCalibrateButton();
   }
   
+  /* 
   // Dev HR buttons only in Overview
   if (currentMode.equals("Overview")) {
     drawDevHRButtons();
   }
+  */
 }
 
 void keyPressed() {
@@ -276,6 +279,7 @@ void mousePressed() {
     }
   }
   
+  /* 
   // Check Dev HR Buttons
   float devBtnW = 30;
   float devBtnH = 30;
@@ -287,6 +291,7 @@ void mousePressed() {
     if (mouseX > devBx1 && mouseX < devBx1 + devBtnW) devHrOffset -= 10; // Minus
     else if (mouseX > devBx2 && mouseX < devBx2 + devBtnW) devHrOffset += 10; // Plus
   }
+  */
 }
 
 void serialEvent(Serial p) {

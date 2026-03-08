@@ -15,6 +15,12 @@ const int ad8232LOPlus = 10;
 const int ad8232LOMinus = 11;
 const int ad8232Output = A0;
 const int fsrPin = A1; 
+const int ledPin = 12; // Red LED for stress indicator
+
+// Median Filter Buffers (Increased to 5 for better spike rejection)
+int ecgM[5] = {512, 512, 512, 512, 512};
+int fsrM[5] = {512, 512, 512, 512, 512};
+int mIdx = 0;
 
 // Timing & Sampling
 unsigned long lastSampleTime = 0;
@@ -52,6 +58,8 @@ void setup() {
 
   pinMode(ad8232LOPlus, INPUT);
   pinMode(ad8232LOMinus, INPUT);
+  pinMode(ledPin, OUTPUT);
+  digitalWrite(ledPin, LOW);
   
   Serial.println("--- SYSTEM START: Lab 2 Sensor Test ---");
   calibrationStartTime = millis(); // Start auto-calib on boot
@@ -64,35 +72,47 @@ void loop() {
   // Handle Calibration Command from Processing
   if (Serial.available() > 0) {
     char cmd = Serial.read();
-    if (cmd == 'c') {
-      isCalibrating = true;
-      calibrationStartTime = currentTime;
-      calibMin = 1024;
-      calibMax = 0;
+      if (cmd == 'c') {
+        isCalibrating = true;
+        calibrationStartTime = currentTime;
+        calibMin = 1024;
+        calibMax = 0;
+      } else if (cmd == 'S') {
+        digitalWrite(ledPin, HIGH); // Stress detected: LED ON
+      } else if (cmd == 'N') {
+        digitalWrite(ledPin, LOW);  // Calm detected: LED OFF
+      }
     }
-  }
 
   // Maintain a consistent sampling rate (100Hz)
   if (currentTime - lastSampleTime >= sampleInterval) {
     lastSampleTime += sampleInterval; // Fixed-interval timing (prevents drift/bursts)
 
-    // --- 1. SENSOR READINGS ---
+    // --- 1. SENSOR READINGS WITH 5-POINT MEDIAN ---
     int rawValue = analogRead(ad8232Output);
-    static float ecgFiltered = -1.0; 
-    if (ecgFiltered < 0) ecgFiltered = rawValue; // Initialize with first reading
+    int rawFsr = analogRead(fsrPin);
 
-    // Adaptive Filter: If jump is < 300, use 0.2 alpha. If it's a huge spike,
-    // still follow it very slowly (0.02) so the filter doesn't stay stuck forever.
-    float ecgAlpha = (abs(rawValue - (int)ecgFiltered) < 300) ? 0.2 : 0.02;
-    ecgFiltered = (ecgAlpha * rawValue) + ((1.0 - ecgAlpha) * ecgFiltered);
+    // a. Store in 5-sample buffer
+    ecgM[mIdx] = rawValue;
+    fsrM[mIdx] = rawFsr;
+    mIdx = (mIdx + 1) % 5;
+
+    // b. Calculate 5-point Median (Extremely robust against bursts of noise)
+    int ecgMedian = getMedian5(ecgM);
+    int fsrMedian = getMedian5(fsrM);
+
+    // c. Adaptive Low-Pass (Alpha)
+    static float ecgFiltered = -1.0; 
+    if (ecgFiltered < 0) ecgFiltered = ecgMedian; 
+    // Chase R-peaks quickly, but slow down for everything else
+    float ecgAlpha = (abs(ecgMedian - (int)ecgFiltered) < 150) ? 0.2 : 0.1;
+    ecgFiltered = (ecgAlpha * ecgMedian) + ((1.0 - ecgAlpha) * ecgFiltered);
     int ecgRaw = (int)ecgFiltered;
     
-    int rawFsr = analogRead(fsrPin);
     static float fsrFiltered = -1.0;
-    if (fsrFiltered < 0) fsrFiltered = rawFsr; // Initialize with first reading
-
-    float fsrAlpha = (abs(rawFsr - (int)fsrFiltered) < 400) ? 0.15 : 0.02;
-    fsrFiltered = (fsrAlpha * rawFsr) + ((1.0 - fsrAlpha) * fsrFiltered);
+    if (fsrFiltered < 0) fsrFiltered = fsrMedian; 
+    float fsrAlpha = 0.1; // Smoother respiration
+    fsrFiltered = (fsrAlpha * fsrMedian) + ((1.0 - fsrAlpha) * fsrFiltered);
     int fsrRaw = (int)fsrFiltered;
 
     // --- 2. AUTO-CALIBRATION LOGIC ---
@@ -136,17 +156,19 @@ void loop() {
       // Calculate instantaneous BPM
       int rawBpm = 60000 / beatInterval;
 
-      // Add to rolling average buffer
-      beatIntervals[beatIndex] = rawBpm;
-      beatIndex = (beatIndex + 1) % bpmAvgSize;
+      // BPM Outlier Guard: If heart rate jumps > 40% in one beat, it's likely noise
+      bool isLeap = (bpm > 0 && abs(rawBpm - bpm) > (bpm * 0.4));
+      
+      if (!isLeap || rawBpm < 220) {
+        beatIntervals[beatIndex] = rawBpm;
+        beatIndex = (beatIndex + 1) % bpmAvgSize;
 
-      // Calculate Average BPM
-      long sum = 0;
-      for (int i = 0; i < bpmAvgSize; i++) sum += beatIntervals[i];
-      bpm = sum / bpmAvgSize;
+        long sum = 0;
+        for (int i = 0; i < bpmAvgSize; i++) sum += beatIntervals[i];
+        bpm = sum / bpmAvgSize;
+      }
 
-    } else if (ecgRaw < (ecgThreshold - 50)) {
-      // Sensitivity reset - lower it more to ensure we clear the peak
+    } else if (ecgRaw < (ecgThreshold - 60)) {
       beatDetected = false;
     }
 
@@ -174,15 +196,44 @@ void loop() {
     }
 
     // --- 4. SERIAL OUTPUT FOR PROCESSING ---
-    /* 
-     * Format: ECG_RAW, FSR_RAW, BPM, RESP_RATE, INHALE_MS, EXHALE_MS
-     * Using reduced decimal precision for speed to prevent buffer congestion
-     */
-    Serial.print(ecgRaw);           Serial.print(",");
-    Serial.print(fsrRaw);           Serial.print(",");
-    Serial.print(bpm);              Serial.print(",");
-    Serial.print(respirationRate, 1); Serial.print(","); 
-    Serial.print(inhaleDuration);   Serial.print(",");
-    Serial.println(exhaleDuration);
+    if (digitalRead(ad8232LOPlus) == HIGH || digitalRead(ad8232LOMinus) == HIGH) {
+      // In Leads-Off state, the ECG value is usually just noise/railed.
+      // We send a specific flag or just 0s so the UI can detect it.
+      Serial.print(0);                Serial.print(","); // ECG 0
+      Serial.print(fsrRaw);           Serial.print(","); // FSR still works
+      Serial.print(0);                Serial.print(","); // BPM 0
+      Serial.print(respirationRate, 1); Serial.print(","); 
+      Serial.print(inhaleDuration);   Serial.print(",");
+      Serial.println(exhaleDuration);
+      
+      // Optional: Print a human-readable message to Serial for debugging (Comment out for Processing)
+      // Serial.println("--- LEADS OFF detected ---");
+    } else {
+      Serial.print(ecgRaw);           Serial.print(",");
+      Serial.print(fsrRaw);           Serial.print(",");
+      Serial.print(bpm);              Serial.print(",");
+      Serial.print(respirationRate, 1); Serial.print(","); 
+      Serial.print(inhaleDuration);   Serial.print(",");
+      Serial.println(exhaleDuration);
+    }
   }
+}
+
+// ── HELPER: 5-POINT MEDIAN ─────────────────────────────────────────────────
+// Performs a simple insertion sort on a local copy to return the central value
+int getMedian5(int* p) {
+  int sortBuf[5];
+  for (int i=0; i<5; i++) sortBuf[i] = p[i];
+  
+  // Minimal Sort
+  for (int i = 1; i < 5; i++) {
+    int key = sortBuf[i];
+    int j = i - 1;
+    while (j >= 0 && sortBuf[j] > key) {
+      sortBuf[j + 1] = sortBuf[j];
+      j = j - 1;
+    }
+    sortBuf[j + 1] = key;
+  }
+  return sortBuf[2]; // Return the middle element
 }

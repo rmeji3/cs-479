@@ -23,7 +23,7 @@ class RealTimeGraph {
     this.yMax = yMax;
 
     if (title != null && title.toLowerCase().indexOf("ecg") >= 0) {
-      this.yMin = 420;
+      this.yMin = 400;
       this.yMax = 580;
     }
 
@@ -70,7 +70,7 @@ class RealTimeGraph {
     textAlign(CENTER);
     fill(0); // Black text
     textSize(12);
-//=======
+
     // Custom y-axis label for ECG and FSR/Resp graphs
     String lowerTitle = title == null ? "" : title.toLowerCase();
     if (isHrGraph) {
@@ -82,7 +82,6 @@ class RealTimeGraph {
     } else {
       text("Amplitude", 0, 15);
     }
-//>>>>>>> 379d40347e5a442fd474f4c0c1d029a70b29c828
     popMatrix();
     
     fill(120);

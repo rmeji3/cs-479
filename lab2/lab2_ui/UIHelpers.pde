@@ -157,7 +157,11 @@ void drawStressMode() {
     if (bpmDiff > 12) {
       fill(255, 50, 50);
       text("STRESSED", 45, 210);
-        // PLAY MUSIC IF STRESSED
+        // Toggle LED and play music
+        if (!lastStateStressed) {
+          if (myPort != null) myPort.write('S');
+          lastStateStressed = true;
+        }
         if (calmMusic != null && !calmMusic.isPlaying()) {
           calmMusic.loop(); 
       }  
@@ -165,7 +169,11 @@ void drawStressMode() {
       fill(75, 175, 75);
       text("CALM", 45, 210);
       
-      // STOP MUSIC IF CALM
+      // Toggle LED and stop music
+      if (lastStateStressed) {
+        if (myPort != null) myPort.write('N');
+        lastStateStressed = false;
+      }
       if (calmMusic != null && calmMusic.isPlaying()) {
         calmMusic.stop();
       }
@@ -612,6 +620,7 @@ void drawCalibrateButton() {
   textAlign(LEFT);
 }
 
+/* 
 void drawDevHRButtons() {
   float btnW = 30;
   float btnH = 30;
@@ -646,6 +655,7 @@ void drawDevHRButtons() {
   fill(100);
   text("Dev HR", bx1, by - 5);
 }
+*/
 // ─────────────────────────────────────────────
 // PSC INFO BUTTON  (drawn inside translated canvas)
 // ─────────────────────────────────────────────
