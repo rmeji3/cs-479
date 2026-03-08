@@ -15,7 +15,7 @@ const int ad8232LOPlus = 10;
 const int ad8232LOMinus = 11;
 const int ad8232Output = A0;
 const int fsrPin = A1; 
-const int ledPin = 12; // Red LED for stress indicator
+const int ledPin = 13; // Red LED for stress indicator
 
 // Median Filter Buffers (Increased to 5 for better spike rejection)
 int ecgM[5] = {512, 512, 512, 512, 512};
