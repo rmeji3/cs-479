@@ -359,7 +359,7 @@ void drawPSCMode() {
 
   // ================= RIGHT PANEL =================
   fill(255);
-  rect(480, 80, 480, 400, 15);
+  rect(480, 80, 440, 400, 15);
 
   fill(40);
   textSize(20);
@@ -503,18 +503,20 @@ void drawStatItem(float x, float y, String label, float val, String unit, color 
   String icon = "--";
   if (label.contains("Resting")) icon = "R";
   if (label.contains("Respiratory") || label.contains("Resp")) icon = "B";
+  if (label.equals("HRV")) icon = "HRV";
   
   // Icon Circle on the Right (as seen in UI reference)
   fill(c, 40); 
   ellipse(x + 350, y + 47, 55, 55);
   fill(c);
-  textSize(28);
   textAlign(CENTER, CENTER);
-  if (label.equals("Current Heart Rate") && heartImg != null) {
+  
+  if (label.contains("Heart Rate") && heartImg != null) {
     imageMode(CENTER);
     image(heartImg, x + 350, y + 47, 35, 35);
     imageMode(CORNER);
   } else {
+    textSize(icon.equals("HRV") ? 18 : 28);
     text(icon, x + 350, y + 45);
   }
   
@@ -689,14 +691,30 @@ void drawPSCInfoPanel() {
   rect(0, 0, width, height);
 
   float px = 50, py = 90;
-  float pw = width - 280, ph = height - 120;
+  float pw = width - 480, ph = height - 120;
   fill(255);
   rect(px, py, pw, ph, 18);
 
   // Title bar
   fill(60, 130, 220);
   rect(px, py, pw, 52, 18, 18, 0, 0);
+  
+  // Close Button
+  float closeX = px + pw - 40;
+  float closeY = py + 11;
+  float closeW = 30;
+  float closeH = 30;
+  boolean closeHover = (mouseX > closeX && mouseX < closeX + closeW && mouseY > closeY && mouseY < closeY + closeH);
+  
+  fill(closeHover ? color(255, 100, 100) : color(255, 255, 255, 40));
+  noStroke();
+  rect(closeX, closeY, closeW, closeH, 6);
+  
   fill(255);
+  textAlign(CENTER, CENTER);
+  textSize(18);
+  text("×", closeX + closeW/2, closeY + closeH/2 - 2); // Multiplication sign as X
+  
   textAlign(LEFT, CENTER);
   textSize(21);
   text("  PSC Analysis — Quick Guide", px + 10, py + 26);
@@ -782,6 +800,6 @@ void drawPSCInfoPanel() {
 
   // Close hint
   fill(160); textSize(12); textAlign(CENTER, BOTTOM);
-  text("Click ? INFO again to close", px + pw / 2, py + ph - 10);
+  text("Click the × button or ? INFO again to close", px + pw / 2, py + ph - 10);
   textAlign(LEFT, BASELINE);
 }

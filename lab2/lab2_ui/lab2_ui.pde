@@ -228,11 +228,27 @@ void mousePressed() {
       pscHelpOpen = !pscHelpOpen;
       return;
     }
-    // Close panel when clicking outside the card
+    // Close panel logic
     if (pscHelpOpen) {
-      boolean insideCard = (mouseX > 100 && mouseX < width - 100 &&
-                            mouseY > 50  && mouseY < height - 50);
-      if (!insideCard) { pscHelpOpen = false; return; }
+      float px = 240 + 50; // Accounting for Sidebar translation
+      float py = 90;
+      float pw = width - 480;
+      float ph = height - 120;
+      
+      // Close Button check
+      float closeX = px + pw - 40;
+      float closeY = py + 11;
+      if (mouseX > closeX && mouseX < closeX + 30 && mouseY > closeY && mouseY < closeY + 30) {
+        pscHelpOpen = false;
+        return;
+      }
+      
+      // Check if clicking inside the main card area
+      boolean insideCard = (mouseX > px && mouseX < px + pw && mouseY > py && mouseY < py + ph);
+      if (!insideCard) { 
+        pscHelpOpen = false; 
+        return; 
+      }
     }
   }
 
