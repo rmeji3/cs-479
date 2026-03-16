@@ -18,6 +18,7 @@ class GameEngine {
   static final int WAITING = 2;
   static final int SUCCESS = 3;
   static final int FAIL    = 4;
+  static final int ENDED   = 5;
 
   int state = IDLE;
   int level = 0;
@@ -34,7 +35,7 @@ class GameEngine {
   boolean inGap = false;
   int baseShowMs  = 600;   // duration each step is lit
   int baseGapMs   = 300;   // gap between steps
-  int successMs   = 1200;  // pause after level complete
+  int successMs   = 2500;  // pause after level complete (let correct sound play)
   int failDisplayMs = 2500;
 
   // Flex introduces at this level
@@ -168,13 +169,14 @@ class GameEngine {
         state = SUCCESS;
         stateTimer = millis();
         padGrid.flashAll();
+        soundManager.playCorrect();
       }
     } else {
       // Wrong!
       state = FAIL;
       stateTimer = millis();
       if (score > highScore) highScore = score;
-      soundManager.playFail();
+      soundManager.playWrong();
     }
   }
 
@@ -186,12 +188,12 @@ class GameEngine {
 
   // Physical pad 10: START when idle/failed, END when playing
   void startEndButton() {
-    if (state == IDLE || state == FAIL) {
+    if (state == IDLE || state == FAIL || state == ENDED) {
       startGame();
     } else {
       // End game mid-play
       if (score > highScore) highScore = score;
-      state = FAIL;
+      state = ENDED;
       stateTimer = millis();
       padGrid.clearAll();
       flexBar.setLit(false);
@@ -209,6 +211,7 @@ class GameEngine {
         return "Your turn!  " + playerIndex + " / " + sequence.size();
       case SUCCESS: return "Correct! ✓";
       case FAIL:    return "Wrong! Game Over — Click to restart";
+      case ENDED:   return "Game Ended — Score: " + score;
       default:      return "";
     }
   }
@@ -217,6 +220,7 @@ class GameEngine {
     switch (state) {
       case SUCCESS: return color(80, 255, 120);
       case FAIL:    return color(255, 80, 80);
+      case ENDED:   return color(180, 180, 190);
       case SHOWING: return color(255, 220, 80);
       case WAITING: return color(100, 200, 255);
       default:      return color(160, 160, 170);

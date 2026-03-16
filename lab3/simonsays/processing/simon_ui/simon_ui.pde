@@ -154,7 +154,7 @@ void drawConnectionDot() {
 // ============================================
 
 void mousePressed() {
-  if (game.state == GameEngine.FAIL) {
+  if (game.state == GameEngine.FAIL || game.state == GameEngine.ENDED) {
     game.restart();
     return;
   }
