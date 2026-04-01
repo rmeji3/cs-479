@@ -7,7 +7,7 @@
 
 // --- Pad Settings ---
 #define NUM_PADS          10
-#define TOUCH_THRESHOLD   6       // Raw filtered value below this = touched
+#define TOUCH_THRESHOLD   4       // Raw filtered value below this = touched
 #define DEBOUNCE_MS       30      // Debounce time in milliseconds
 
 // --- Flex Sensor ---
