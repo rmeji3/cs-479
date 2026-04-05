@@ -77,12 +77,19 @@ void draw() {
 }
 
 void drawHeader() {
-  fill(Style.PANEL);
+  // Gradient-like header background
+  fill(#0F5FDF);
   noStroke();
   rect(0, 0, width, 60);
   
-  fill(Style.ACCENT);
-  textSize(20);
+  // Subtle accent line at bottom
+  stroke(#0A47B3);
+  strokeWeight(2);
+  line(0, 60, width, 60);
+  noStroke();
+  
+  fill(#FFFFFF);
+  textSize(22);
   textAlign(LEFT, CENTER);
   text("SMART-SOLE GAIT ANALYSIS", 30, 30);
 }
@@ -93,12 +100,15 @@ void drawTabs() {
   float tabAreaHeight = 50;
   
   // Background for tab area
-  fill(#F0F0F0);
+  fill(#FFFFFF);
+  noStroke();
   rect(0, tabY, width, tabAreaHeight);
   
   // Draw divider
-  stroke(#CCCCCC);
+  stroke(#E2E8F0);
+  strokeWeight(1);
   line(0, tabY + tabAreaHeight, width, tabY + tabAreaHeight);
+  noStroke();
   
   // Tab definitions
   String[] tabNames = {"DASHBOARD", "RECOMMENDATIONS"};
@@ -108,24 +118,30 @@ void drawTabs() {
     tabX[i] = 30 + i * tabSpacing;
     tabW[i] = 180;
     
-    // Tab button background
     if (activeTab == i) {
-      fill(Style.ACCENT);
+      // Active tab: Blue background with shadow
+      fill(#E0F0FF);
+      stroke(#0F5FDF);
+      strokeWeight(2);
+      rect(tabX[i], tabY + 8, tabW[i], 34, 8);
+      
+      fill(#0F5FDF);
+      textSize(14);
+      textAlign(CENTER, CENTER);
+      text(tabNames[i], tabX[i] + tabW[i]/2, tabY + 25);
     } else {
-      fill(#E0E0E0);
+      // Inactive tab: Subtle styling
+      fill(#F8FAFC);
+      stroke(#E2E8F0);
+      strokeWeight(1);
+      rect(tabX[i], tabY + 8, tabW[i], 34, 8);
+      
+      fill(#718096);
+      textSize(14);
+      textAlign(CENTER, CENTER);
+      text(tabNames[i], tabX[i] + tabW[i]/2, tabY + 25);
     }
     noStroke();
-    rect(tabX[i], tabY + 5, tabW[i], 40, 4);
-    
-    // Tab text
-    if (activeTab == i) {
-      fill(#FFFFFF);
-    } else {
-      fill(#666666);
-    }
-    textSize(14);
-    textAlign(CENTER, CENTER);
-    text(tabNames[i], tabX[i] + tabW[i]/2, tabY + 25);
   }
 }
 
@@ -153,33 +169,40 @@ void drawFullRecommendations(Recommendation rec) {
   float w = width - 2 * margin;
   float h = height - 160;
   
+  // Shadow effect
+  fill(#00000015);
+  rect(x + 3, y + 3, w, h, 16);
+  
   // Background card
-  fill(Style.PANEL);
-  stroke(#CCCCCC);
+  fill(#FFFFFF);
+  stroke(#E2E8F0);
   strokeWeight(1);
-  rect(x, y, w, h, 8);
+  rect(x, y, w, h, 16);
+  noStroke();
   
   // Large title
-  fill(Style.ACCENT);
+  fill(#0F5FDF);
   textSize(36);
   textAlign(LEFT, TOP);
   text("PERSONALIZED GAIT RECOMMENDATIONS", x + 30, y + 30);
   
   // Gait pattern section
-  stroke(#CCCCCC);
+  stroke(#E2E8F0);
+  strokeWeight(1);
   line(x + 30, y + 85, x + w - 30, y + 85);
+  noStroke();
   
-  fill(Style.ACCENT);
+  fill(#0F5FDF);
   textSize(22);
   text("Your Gait Pattern:", x + 30, y + 110);
   
-  fill(Style.TEXT_MAIN);
+  fill(#E63946);
   textSize(32);
   text(rec.title, x + 30, y + 155);
   
   // Shoe images section
   float shoeY = y + 250;
-  fill(#FF9800);
+  fill(#0F5FDF);
   textSize(20);
   text("🥾 RECOMMENDED SHOES", x + 50, shoeY);
   
@@ -195,13 +218,18 @@ void drawFullRecommendations(Recommendation rec) {
       float imgX = x + 50 + i * imgSpacing;
       float imgY = imgStartY;
       
-      // Draw placeholder/image box
-      fill(#F5F5F5);
-      stroke(#CCCCCC);
-      strokeWeight(1);
-      rect(imgX, imgY, imgWidth, imgHeight, 4);
+      // Shadow for image box
+      fill(#00000015);
+      rect(imgX + 1, imgY + 1, imgWidth, imgHeight, 8);
       
-      // Try to load and display image (NOTE: requires internet connection)
+      // Draw placeholder/image box
+      fill(#F8FAFC);
+      stroke(#E2E8F0);
+      strokeWeight(1);
+      rect(imgX, imgY, imgWidth, imgHeight, 8);
+      noStroke();
+      
+      // Try to load and display image
       try {
         PImage img = loadImage(rec.shoeImages.get(i));
         if (img != null) {
@@ -215,7 +243,7 @@ void drawFullRecommendations(Recommendation rec) {
       }
       
       // Shoe name below image
-      fill(Style.TEXT_MAIN);
+      fill(#1A202C);
       textSize(11);
       textAlign(LEFT, TOP);
       String shoeName = rec.shoes.get(i);
@@ -226,11 +254,11 @@ void drawFullRecommendations(Recommendation rec) {
   
   // Exercises section
   float exerY = imgStartY + 200;
-  fill(#4CAF50);
+  fill(#2ECC71);
   textSize(20);
   text("🏃 RECOMMENDED EXERCISES", x + 30, exerY);
   
-  fill(Style.TEXT_MAIN);
+  fill(#1A202C);
   textSize(15);
   for (int i = 0; i < rec.exercises.size(); i++) {
     text("• " + rec.exercises.get(i), x + 30, exerY + 40 + i * 35);
@@ -238,15 +266,16 @@ void drawFullRecommendations(Recommendation rec) {
   
   // Bottom - Tip section
   float tipY = y + h - 110;
-  stroke(#FF9800);
+  stroke(#FFB703);
   strokeWeight(2);
   line(x + 30, tipY, x + w - 30, tipY);
+  noStroke();
   
-  fill(#FF9800);
+  fill(#FFB703);
   textSize(20);
   text("⚠️ IMPORTANT TIP", x + 30, tipY + 20);
   
-  fill(Style.TEXT_MAIN);
+  fill(#1A202C);
   textSize(15);
   String[] tipLines = wrapText(rec.tip, w - 100, 15);
   for (int i = 0; i < tipLines.length; i++) {
@@ -363,39 +392,47 @@ void drawMetrics() {
   float textY = cardY + 60;
   float spacing = 28;
   
-  textSize(16);
+  textSize(14);
   textAlign(LEFT, TOP);
   
   // Profile
   fill(Style.TEXT_DIM);
   text("GAIT PROFILE:", textX, textY);
-  fill(Style.ACCENT);
+  fill(#E63946);
+  textSize(15);
   text(currentProfile.toUpperCase(), textX + 130, textY);
   
   // Status
   textY += spacing;
   fill(Style.TEXT_DIM);
+  textSize(14);
   text("MOTION STATUS:", textX, textY);
-  fill(inMotion ? Style.GREEN : Style.RED);
+  fill(inMotion ? #2ECC71 : #E63946);
+  textSize(15);
   text(inMotion ? "IN MOTION" : "STANDING STILL", textX + 130, textY);
   
   // Step Count
   textY += spacing;
   fill(Style.TEXT_DIM);
+  textSize(14);
   text("STEP COUNT:", textX, textY);
   fill(Style.TEXT_MAIN);
+  textSize(15);
   text(stepCount, textX + 130, textY);
   
   // Cadence
   textY += spacing;
   fill(Style.TEXT_DIM);
+  textSize(14);
   text("CADENCE:", textX, textY);
   fill(Style.TEXT_MAIN);
+  textSize(15);
   text(nf(cadence, 1, 1) + " steps/min", textX + 130, textY);
   
   // MFP Visualization
   textY += spacing;
   fill(Style.TEXT_DIM);
+  textSize(14);
   text("MEDIAL FORCE %:", textX, textY);
   
   float barW = 200;
@@ -403,14 +440,18 @@ void drawMetrics() {
   float barY = textY + 4;
   
   // Bar background
-  fill(40);
+  fill(#E2E8F0);
+  stroke(#CBD5E0);
+  strokeWeight(1);
   rect(barX, barY, barW, 12, 4);
+  noStroke();
   
-  // Bar fill
-  fill(Style.ACCENT);
+  // Bar fill with gradient effect
+  fill(#0F5FDF);
   rect(barX, barY, map(mfpValue, 0, 100, 0, barW), 12, 4);
   
   fill(Style.TEXT_MAIN);
+  textSize(14);
   text(nf(mfpValue, 1, 1) + "%", barX + barW + 10, textY);
 }
 
