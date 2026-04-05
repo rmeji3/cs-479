@@ -1,0 +1,123 @@
+class RecommendationsPanel {
+  float x, y, w, h;
+  
+  RecommendationsPanel(float x, float y, float w, float h) {
+    this.x = x;
+    this.y = y;
+    this.w = w;
+    this.h = h;
+  }
+  
+  void display(Style style, Recommendation rec, String gaitType) {
+    pushMatrix();
+    translate(x, y);
+    
+    // Card background
+    fill(Style.PANEL);
+    stroke(#CCCCCC);
+    strokeWeight(1);
+    rect(0, 0, w, h, 8);
+    
+    // Title
+    fill(Style.ACCENT);
+    textSize(16);
+    textAlign(LEFT, TOP);
+    text("SHOE & EXERCISE RECOMMENDATIONS", 15, 15);
+    
+    // Gait Classification  
+    stroke(#CCCCCC);
+    line(15, 40, w - 15, 40);
+    
+    fill(Style.ACCENT);
+    textSize(12);
+    text("GAIT PATTERN DETECTED:", 15, 50);
+    
+    fill(Style.TEXT_MAIN);
+    textSize(13);
+    textStyle(BOLD);
+    text(rec.title.toUpperCase(), 15, 68);
+    textStyle(NORMAL);
+    
+    // Recommended Shoes Section
+    fill(Style.TEXT_DIM);
+    textSize(11);
+    text("🥾 RECOMMENDED SHOES:", 15, 95);
+    
+    stroke(#CCCCCC);
+    line(15, 108, w - 15, 108);
+    
+    fill(Style.TEXT_MAIN);
+    textSize(9);
+    float shoeY = 118;
+    for (int i = 0; i < rec.shoes.size(); i++) {
+      String shoe = rec.shoes.get(i);
+      if (textWidth(shoe) > w - 40) {
+        shoe = shoe.substring(0, min(40, shoe.length())) + "...";
+      }
+      text((i+1) + ". " + shoe, 25, shoeY + i * 14);
+    }
+    
+    // Recommended Exercises Section
+    float exerciseStartY = shoeY + (rec.shoes.size() * 14) + 15;
+    fill(Style.TEXT_DIM);
+    textSize(11);
+    text("🏃 RECOMMENDED EXERCISES:", 15, exerciseStartY);
+    
+    stroke(#CCCCCC);
+    line(15, exerciseStartY + 13, w - 15, exerciseStartY + 13);
+    
+    fill(Style.TEXT_MAIN);
+    textSize(9);
+    float exerciseY = exerciseStartY + 23;
+    for (int i = 0; i < rec.exercises.size(); i++) {
+      String ex = rec.exercises.get(i);
+      if (textWidth(ex) > w - 40) {
+        ex = ex.substring(0, min(40, ex.length())) + "...";
+      }
+      text((i+1) + ". " + ex, 25, exerciseY + i * 14);
+    }
+    
+    // Tip/Warning Section
+    float tipStartY = exerciseY + (rec.exercises.size() * 14) + 15;
+    fill(#FF9800);
+    textSize(11);
+    text("⚠️ PERSONALIZED TIP:", 15, tipStartY);
+    
+    stroke(#FFCC99);
+    line(15, tipStartY + 13, w - 15, tipStartY + 13);
+    
+    fill(Style.TEXT_MAIN);
+    textSize(9);
+    String[] tipLines = wrapText(rec.tip, w - 40, 9);
+    float tipY = tipStartY + 23;
+    for (int i = 0; i < tipLines.length; i++) {
+      text(tipLines[i], 25, tipY + i * 12);
+    }
+    
+    popMatrix();
+  }
+  
+  String[] wrapText(String text, float maxWidth, float textSize) {
+    ArrayList<String> lines = new ArrayList<String>();
+    String[] words = split(text, ' ');
+    String currentLine = "";
+    
+    textSize(textSize);
+    for (String word : words) {
+      if (textWidth(currentLine + " " + word) < maxWidth) {
+        currentLine += " " + word;
+      } else {
+        if (currentLine.length() > 0) {
+          lines.add(currentLine.trim());
+        }
+        currentLine = word;
+      }
+    }
+    if (currentLine.length() > 0) {
+      lines.add(currentLine.trim());
+    }
+    
+    String[] result = new String[lines.size()];
+    return lines.toArray(result);
+  }
+}
