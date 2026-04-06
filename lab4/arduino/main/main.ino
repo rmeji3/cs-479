@@ -50,11 +50,17 @@ void loop() {
   fHEEL = (alpha * valHEEL) + ((1 - alpha) * fHEEL);
 
   // Map filtered FSR values to LED brightness (PWM 0-255)
-  // Lowered threshold slightly to 915 to make it less stiff
-  analogWrite(PIN_LED_MF, (fMF > 915) ? map((int)fMF, 915, 1023, 0, 255) : 0);
-  analogWrite(PIN_LED_LF, (fLF > 915) ? map((int)fLF, 915, 1023, 0, 255) : 0);
-  analogWrite(PIN_LED_MM, (fMM > 915) ? map((int)fMM, 915, 1023, 0, 255) : 0);
-  analogWrite(PIN_LED_HEEL, (fHEEL > 915) ? map((int)fHEEL, 915, 1023, 0, 255) : 0);
+  // Fix: Convert fMF to int BEFORE map to prevent overflow/looping
+  // Increased threshold to 350 to reduce over-sensitivity
+  int mMF = (int)fMF;
+  int mLF = (int)fLF;
+  int mMM = (int)fMM;
+  int mHEEL = (int)fHEEL;
+  
+  analogWrite(PIN_LED_MF, (mMF > 350) ? map(constrain(mMF, 350, 850), 350, 850, 0, 255) : 0);
+  analogWrite(PIN_LED_LF, (mLF > 350) ? map(constrain(mLF, 350, 850), 350, 850, 0, 255) : 0);
+  analogWrite(PIN_LED_MM, (mMM > 350) ? map(constrain(mMM, 350, 850), 350, 850, 0, 255) : 0);
+  analogWrite(PIN_LED_HEEL, (mHEEL > 350) ? map(constrain(mHEEL, 350, 850), 350, 850, 0, 255) : 0);
 
   // Get MPU-6050 data
   sensors_event_t a, g, temp;
@@ -67,11 +73,11 @@ void loop() {
 
   // Send data to Serial for Processing (using filtered values)
   // Format: MF,LF,MM,HEEL,accelX,accelY,accelZ,gyroX,gyroY,gyroZ
-  // Lowered UI deadzone slightly for more sensitivity on the graphs
-  Serial.print((fMF > 850) ? (int)fMF : 0); Serial.print(",");
-  Serial.print((fLF > 850) ? (int)fLF : 0); Serial.print(",");
-  Serial.print((fMM > 850) ? (int)fMM : 0); Serial.print(",");
-  Serial.print((fHEEL > 850) ? (int)fHEEL : 0); Serial.print(",");
+  // Set UI deadzone to 300 to match LED sensitivity
+  Serial.print((fMF > 300) ? (int)fMF : 0); Serial.print(",");
+  Serial.print((fLF > 300) ? (int)fLF : 0); Serial.print(",");
+  Serial.print((fMM > 300) ? (int)fMM : 0); Serial.print(",");
+  Serial.print((fHEEL > 300) ? (int)fHEEL : 0); Serial.print(",");
   Serial.print(fAX, 3); Serial.print(",");
   Serial.print(fAY, 3); Serial.print(",");
   Serial.print(fAZ, 3); Serial.print(",");
