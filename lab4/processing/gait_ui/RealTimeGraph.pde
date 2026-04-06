@@ -28,36 +28,49 @@ class RealTimeGraph {
     }
   }
 
+  void clear() {
+    for (FloatList stream : dataStreams) {
+      stream.clear();
+    }
+  }
+
   void display(Style style) {
     pushMatrix();
     translate(x, y);
     
     style.card(0, 0, w, h, title);
     
+    float startX = 60;
+    float startY = 80;
+    float graphW = w - 100;
+    float graphH = h - 100;
+
+    // Draw grid
+    stroke(45);
+    line(startX, startY + graphH, startX + graphW, startY + graphH); // X axis
+    line(startX, startY, startX, startY + graphH); // Y axis
+
     // Draw data lines
     for (int i = 0; i < dataStreams.size(); i++) {
       stroke(colors[i % colors.length]);
-      strokeWeight(1.5);
+      strokeWeight(2);
       noFill();
       beginShape();
       FloatList stream = dataStreams.get(i);
       for (int j = 0; j < stream.size(); j++) {
-        float vx = map(j, 0, maxPoints, 20, w - 20);
+        float vx = map(j, 0, maxPoints - 1, startX, startX + graphW);
         
-        // Auto-scale based on title
         float floor, ceil;
         if (title.contains("FSR")) {
-            floor = 850; 
+            floor = 0; 
             ceil = 1023;
         } else {
-            // Accel data is typically +/- 2G around gravity (9.8). 
-            // Setting a tighter range for better visibility (e.g., 0 to 20)
-            floor = -5;
+            floor = -20;
             ceil = 20; 
         }
         
         float val = constrain(stream.get(j), floor, ceil);
-        float vy = map(val, floor, ceil, h - 20, 50); 
+        float vy = map(val, floor, ceil, startY + graphH, startY); 
         vertex(vx, vy);
       }
       endShape();
@@ -66,7 +79,7 @@ class RealTimeGraph {
       fill(colors[i % colors.length]);
       textSize(12);
       textAlign(RIGHT, TOP);
-      text(streamLabels[i], w - 20, 15 + i*15);
+      text(streamLabels[i], w - 20, 60 + i*18);
     }
     
     popMatrix();

@@ -10,6 +10,10 @@ Heatmap heat;
 RealTimeGraph fsrGraph;
 RealTimeGraph accelGraph;
 
+// Recorded data visualization
+StaticGraph recordGraph;
+StaticGraph recordAccel;
+
 // Sidebar and Mode management
 int mode = 0; // 0: Live, 1: Record/Replay
 ArrayList<float[]> recordedData = new ArrayList<float[]>();
@@ -22,6 +26,7 @@ boolean isCalibrated = false;
 
 // Gait Analysis
 float mfpValue = 0;
+float mfpValueSmooth = 0; // Smoothed version
 int stepCount = 0;
 float cadence = 0;
 long startTime;
@@ -34,7 +39,7 @@ int motionDebounceLimit = 15; // Number of frames to confirm state change
 
 // Gait Profiling Buffers
 ArrayList<Float> mfpHistory = new ArrayList<Float>();
-int historyLimit = 100; // ~2 seconds of data at 50Hz
+int historyLimit = 200; // Increased to ~4 seconds for better smoothing
 
 // Profile tracking
 String currentProfile = "Normal";
@@ -63,13 +68,17 @@ void setup() {
 
   style = new Style();
   // Initialize components - Offset by sidebar width (100)
-  heat = new Heatmap(130, 80, 400, 500);
+  // Shift Heatmap more to the left and Graphs to the right
+  heat = new Heatmap(30, 80, 420, 520);
   
   String[] fsrLabels = {"MF", "LF", "MM", "HEEL"};
-  fsrGraph = new RealTimeGraph(560, 80, 650, 360, 4, fsrLabels, "FSR SENSOR DATA");
+  fsrGraph = new RealTimeGraph(480, 80, 630, 360, 4, fsrLabels, "FSR SENSOR DATA");
   
   String[] accelLabels = {"AccX", "AccY", "AccZ"};
-  accelGraph = new RealTimeGraph(560, 460, 650, 360, 3, accelLabels, "ACCELEROMETER DATA");
+  accelGraph = new RealTimeGraph(480, 460, 630, 360, 3, accelLabels, "ACCELEROMETER DATA");
+
+  recordGraph = new StaticGraph(480, 80, 630, 400, fsrLabels, "RECORDED GAIT PROFILE");
+  recordAccel = new StaticGraph(480, 500, 630, 320, accelLabels, "RECORDED ACCELEROMETER");
   
   startTime = millis();
 }
@@ -94,22 +103,70 @@ void draw() {
   textAlign(LEFT, CENTER);
   text("SMART-SOLE GAIT ANALYSIS DASHBOARD", 30, 30);
   
-  // Use recorded data if in replay mode
-  if (mode == 1 && replayIndex >= 0 && replayIndex < recordedData.size()) {
-      float[] d = recordedData.get(replayIndex);
-      heat.update(d[0], d[1], d[2], d[3]);
-      // Graphs update differently in replay mode - they show the whole history
+  if (mode == 0) {
+    drawLiveDashboard();
+  } else {
+    drawRecordDashboard();
   }
+  
+  popMatrix();
+}
 
-  // Display components
+void drawLiveDashboard() {
   heat.display(style);
   fsrGraph.display(style);
   accelGraph.display(style);
-  
-  // Gait Metrics Display
   drawMetrics();
+}
+
+void drawRecordDashboard() {
+  // Heatmap for replaying frame
+  float[] displayData;
+  if (isRecording && recordedData.size() > 0) {
+    displayData = recordedData.get(recordedData.size()-1);
+  } else if (recordGraph.selectedIndex != -1 && recordGraph.selectedIndex < recordedData.size()) {
+    displayData = recordedData.get(recordGraph.selectedIndex);
+  } else {
+    displayData = new float[]{0,0,0,0,0,0,0};
+  }
   
-  popMatrix();
+  heat.update(displayData[0], displayData[1], displayData[2], displayData[3]);
+  heat.display(style);
+
+  // Big graph for selection
+  recordGraph.setData(recordedData);
+  recordGraph.display(style);
+  
+  recordAccel.setData(recordedData);
+  recordAccel.display(style);
+  
+  // Replay frame indicator and RECORD CONTROLS moved to left side under heatmap
+  float controlX = 30;
+  float controlY = 620;
+
+  if (recordGraph.selectedIndex != -1) {
+    recordAccel.selectedIndex = recordGraph.selectedIndex;
+    fill(Style.ACCENT);
+    textSize(20);
+    textAlign(LEFT, TOP);
+    text("SELECTED DATA", controlX, controlY);
+    
+    // Summary of that point
+    float[] d = recordedData.get(recordGraph.selectedIndex);
+    fill(255);
+    textSize(14);
+    text("MF: " + (int)d[0] + " LF: " + (int)d[1] + " MM: " + (int)d[2] + " HEEL: " + (int)d[3], controlX, controlY + 30);
+  }
+
+  // Record Controls Column
+  style.button(controlX, controlY + 70, 180, 50, isRecording ? "STOP RECORD" : "START RECORD", isRecording ? Style.RED : Style.GREEN, false, 100);
+  style.button(controlX + 190, controlY + 70, 100, 50, "CLEAR", 100, false, 100);
+  
+  if (isRecording) {
+    fill(Style.RED);
+    textAlign(LEFT, CENTER);
+    text("RECORDING ACTIVE", controlX, controlY + 140);
+  }
 }
 
 void drawSidebar() {
@@ -121,47 +178,60 @@ void drawSidebar() {
   fill(Style.TEXT_DIM);
   textSize(10);
   textAlign(CENTER);
-  text("MODE", 50, 30);
+  text("NAVIGATION", 50, 30);
   
   // LIVE Tab
-  fill(mode == 0 ? Style.ACCENT : 40);
-  rect(10, 50, 80, 40, 5);
-  fill(mode == 0 ? 0 : 200);
-  textSize(14);
-  text("LIVE", 50, 75);
+  style.button(10, 50, 80, 50, "LIVE", Style.ACCENT, mode == 0, 0);
   
   // RECORD Tab
-  fill(mode == 1 ? Style.ACCENT : 40);
-  rect(10, 100, 80, 40, 5);
-  fill(isRecording ? Style.RED : (mode == 1 ? 0 : 200));
-  text("RECORD", 50, 125);
+  style.button(10, 110, 80, 50, "RECORD", Style.ACCENT, mode == 1, 0);
   
-  if (mode == 1) {
-      // Show controls for replay
-      fill(255);
-      textSize(10);
-      text("REC: R", 50, 160);
-      text("CLR: X", 50, 175);
-      
-      if (recordedData.size() > 0) {
-          fill(Style.TEXT_DIM);
-          text(recordedData.size() + " frms", 50, 200);
-      }
+  if (isRecording) {
+    fill(Style.RED, 150 + sin(frameCount*0.1)*100);
+    ellipse(80, 110, 10, 10);
+  }
+
+  // Calibration Info at Bottom
+  fill(Style.TEXT_DIM);
+  textSize(9);
+  textAlign(CENTER);
+  text("PRESS 'C' TO\nCALIBRATE", 50, height - 30);
+  if (isCalibrated) {
+    fill(Style.GREEN);
+    text("CALIBRATED", 50, height - 50);
   }
 }
 
 void mousePressed() {
     if (mouseX < 100) {
-        if (mouseY > 50 && mouseY < 90) mode = 0;
-        if (mouseY > 100 && mouseY < 140) mode = 1;
+        if (mouseY > 50 && mouseY < 100) {
+          mode = 0;
+          fsrGraph.clear();
+          accelGraph.clear();
+        }
+        if (mouseY > 110 && mouseY < 160) mode = 1;
     } else if (mode == 1) {
-        // Handle clicking on the graph for replay in mode 1
-        // Simplified: map x coordinate on the graph area to replayIndex
-        if (mouseX > 560 && mouseX < 1210 && mouseY > 80 && mouseY < 440) {
-            replayIndex = (int)map(mouseX, 560, 1210, 0, recordedData.size()-1);
-            replayIndex = constrain(replayIndex, 0, recordedData.size()-1);
+        // Record buttons (relative to translated coordinates - controlX=30, controlY=620)
+        // 100 is the sidebar translation
+        if (mouseX > 100 + 30 && mouseX < 100 + 210 && mouseY > 620 + 70 && mouseY < 620 + 70 + 50) {
+            toggleRecording();
+        } else if (mouseX > 100 + 220 && mouseX < 100 + 320 && mouseY > 620 + 70 && mouseY < 620 + 70 + 50) {
+            clearRecording();
         }
     }
+}
+
+void toggleRecording() {
+  isRecording = !isRecording;
+  if (isRecording) {
+      recordedData.clear();
+      recordGraph.selectedIndex = -1;
+  }
+}
+
+void clearRecording() {
+  recordedData.clear();
+  recordGraph.selectedIndex = -1;
 }
 
 void serialEvent(Serial p) {
@@ -208,14 +278,9 @@ void keyPressed() {
   if (key == 'c' || key == 'C') {
     calibrateAccel();
   } else if (key == 'r' || key == 'R') {
-    isRecording = !isRecording;
-    if (isRecording) {
-      recordedData.clear();
-      replayIndex = -1;
-    }
+    toggleRecording();
   } else if (key == 'x' || key == 'X') {
-    recordedData.clear();
-    replayIndex = -1;
+    clearRecording();
   }
 }
 
@@ -236,11 +301,19 @@ void calculateGaitMetrics(float[] fsrs, float[] accels) {
   float mm = fsrs[2];
   float heel = fsrs[3];
   
-  // MFP Calculation
-  mfpValue = ((mm + mf) * 100.0) / (mm + mf + lf + heel + 0.001);
+  // Instantaneous Medial Force Percentage Calculation
+  // Media side is MM (Medial Midfoot) and MF (Medial Forefoot)
+  // Total side is all 4 sensors
+  float rawMFP = ((mm + mf) * 100.0) / (mm + mf + lf + heel + 0.01);
+  mfpValue = rawMFP;
   
-  // Add to rolling history for profile evaluation
-  mfpHistory.add(mfpValue);
+  // Exponential Moving Average (EMA) for smoother display
+  // alpha of 0.1 means 10% new value, 90% old value
+  float alpha = 0.08; 
+  mfpValueSmooth = (alpha * rawMFP) + ((1 - alpha) * mfpValueSmooth);
+  
+  // Add raw value to history for longer-term profiling
+  mfpHistory.add(rawMFP);
   if (mfpHistory.size() > historyLimit) mfpHistory.remove(0);
   
   // Step Detection (Basic threshold on total pressure)
@@ -361,15 +434,15 @@ void drawMetrics() {
   fill(40);
   rect(barX, barY, barW, 12, 4);
   
-  // Bar fill
+  // Bar fill - Use Smoothed Value
   fill(Style.ACCENT);
-  rect(barX, barY, map(mfpValue, 0, 100, 0, barW), 12, 4);
+  rect(barX, barY, map(mfpValueSmooth, 0, 100, 0, barW), 12, 4);
   
   // Percentage label - Move below the bar to keep within box bounds
   fill(Style.TEXT_MAIN);
   textSize(12);
   textAlign(CENTER, TOP);
-  text(nf(mfpValue, 1, 1) + "%", barX + (map(mfpValue, 0, 100, 0, barW)), barY + 16);
+  text(nf(mfpValueSmooth, 1, 1) + "%", barX + (map(mfpValueSmooth, 0, 100, 0, barW)), barY + 16);
   
   // Reset alignment for other UI elements
   textAlign(LEFT, TOP);
