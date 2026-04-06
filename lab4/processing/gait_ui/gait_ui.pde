@@ -438,11 +438,11 @@ void drawMetrics() {
   fill(Style.ACCENT);
   rect(barX, barY, map(mfpValueSmooth, 0, 100, 0, barW), 12, 4);
   
-  // Percentage label - Move below the bar to keep within box bounds
+  // Percentage label - Move to the right of the bar
   fill(Style.TEXT_MAIN);
-  textSize(12);
-  textAlign(CENTER, TOP);
-  text(nf(mfpValueSmooth, 1, 1) + "%", barX + (map(mfpValueSmooth, 0, 100, 0, barW)), barY + 16);
+  textSize(14);
+  textAlign(LEFT, CENTER);
+  text(nf(mfpValueSmooth, 1, 1) + "%", barX + barW + 10, barY + 6);
   
   // Reset alignment for other UI elements
   textAlign(LEFT, TOP);

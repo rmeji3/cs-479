@@ -79,9 +79,9 @@ class StaticGraph {
     // Legend
     for (int i = 0; i < nStreams; i++) {
         fill(colors[i % colors.length]);
-        textSize(11);
+        textSize(14); // Increased from 11
         textAlign(RIGHT, TOP);
-        text(streamLabels[i], w - 20, 60 + i*15);
+        text(streamLabels[i], w - 20, 60 + i*20); // Adjusted spacing
     }
 
     // Time ticks on X axis

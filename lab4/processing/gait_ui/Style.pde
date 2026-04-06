@@ -1,14 +1,14 @@
 class Style {
-  static final color BG = #121212;
-  static final color PANEL = #1E1E1E;
-  static final color ACCENT = #00FFCC;
-  static final color TEXT_MAIN = #FFFFFF;
-  static final color TEXT_DIM = #AAAAAA;
-  static final color RED = #FF5555;
-  static final color GREEN = #55FF55;
-  static final color BLUE = #5555FF;
-  static final color DARK = #0A0A0A;
-  static final color HOVER = #333333;
+  static final color BG = #F0F2F5;
+  static final color PANEL = #FFFFFF;
+  static final color ACCENT = #007AFF;
+  static final color TEXT_MAIN = #1D1D1F;
+  static final color TEXT_DIM = #6E6E73;
+  static final color RED = #FF3B30;
+  static final color GREEN = #34C759;
+  static final color BLUE = #007AFF;
+  static final color DARK = #D2D2D7;
+  static final color HOVER = #E8E8ED;
   
   void card(float x, float y, float w, float h, String title) {
     fill(PANEL);
@@ -16,13 +16,13 @@ class Style {
     rect(x, y, w, h, 12);
     
     fill(ACCENT);
-    textSize(18);
+    textSize(20);
     textAlign(LEFT, TOP);
     text(title, x + 20, y + 20);
     
-    stroke(PANEL + 15);
+    stroke(DARK);
     strokeWeight(1);
-    line(x + 20, y + 50, x + w - 20, y + 50);
+    line(x + 20, y + 55, x + w - 20, y + 55);
   }
 
   boolean button(float x, float y, float w, float h, String label, color baseColor, boolean active, float translateX) {
@@ -32,19 +32,21 @@ class Style {
     if (active) {
       fill(baseColor);
     } else if (hover) {
-      fill(red(baseColor)*0.8, green(baseColor)*0.8, blue(baseColor)*0.8);
+      // Darken slightly for hover in light mode
+      fill(red(baseColor)*0.9, green(baseColor)*0.9, blue(baseColor)*0.9);
     } else {
-      fill(40);
+      fill(235);
     }
     
     noStroke();
     rect(x, y, w, h, 8);
     
-    // If it is a neutral button (baseColor == 100), make text white on hover/active
-    if (baseColor == 100 && (active || hover)) {
+    // In light mode, active buttons get white text.
+    // Neutral buttons (baseColor == 100) also get white text on hover.
+    if (active || (hover && (baseColor != 40 && baseColor != 235))) {
       fill(255);
     } else {
-      fill(active || hover ? 0 : 200);
+      fill(TEXT_MAIN);
     }
     textAlign(CENTER, CENTER);
     textSize(14);

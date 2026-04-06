@@ -77,9 +77,9 @@ class RealTimeGraph {
       
       // Legend
       fill(colors[i % colors.length]);
-      textSize(12);
+      textSize(14); // Increased from 12
       textAlign(RIGHT, TOP);
-      text(streamLabels[i], w - 20, 60 + i*18);
+      text(streamLabels[i], w - 20, 60 + i*20); // Adjusted spacing for bigger text
     }
     
     popMatrix();
