@@ -43,7 +43,21 @@ class RealTimeGraph {
       FloatList stream = dataStreams.get(i);
       for (int j = 0; j < stream.size(); j++) {
         float vx = map(j, 0, maxPoints, 20, w - 20);
-        float vy = map(stream.get(j), 0, 1023, h - 20, 50); // Adjusted range for card padding
+        
+        // Auto-scale based on title
+        float floor, ceil;
+        if (title.contains("FSR")) {
+            floor = 850; 
+            ceil = 1023;
+        } else {
+            // Accel data is typically +/- 2G around gravity (9.8). 
+            // Setting a tighter range for better visibility (e.g., 0 to 20)
+            floor = -5;
+            ceil = 20; 
+        }
+        
+        float val = constrain(stream.get(j), floor, ceil);
+        float vy = map(val, floor, ceil, h - 20, 50); 
         vertex(vx, vy);
       }
       endShape();

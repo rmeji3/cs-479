@@ -16,16 +16,17 @@ class Heatmap {
     
     // Relative positions calibrated for the provided foot image
     positions = new PVector[4];
-    positions[0] = new PVector(w * 0.35, h * 0.27); // MF (Medial Forefoot) - top left quadrant
+    positions[0] = new PVector(w * 0.65, h * 0.27); // MF (Medial Forefoot) - top left quadrant
     positions[1] = new PVector(w * 0.61, h * 0.45); // LF (Lateral Forefoot) - mid right quadrant
     positions[2] = new PVector(w * 0.42, h * 0.45); // MM (Medial Mid-foot) - mid left quadrant
     positions[3] = new PVector(w * 0.48, h * 0.86); // HEEL - bottom center
   }
 
   void update(float mf, float lf, float mm, float heel) {
-    values[0] = mf;
+    // If mf sensor is pressed but mm heats up, we assign the parameters to match their names:
+    values[0] = mf; 
     values[1] = lf;
-    values[2] = mm;
+    values[2] = mm; 
     values[3] = heel;
   }
 
@@ -39,7 +40,7 @@ class Heatmap {
     if (footImg != null) {
       pushMatrix();
       translate(w/2, h/2 + 20);
-      scale(-1, 1); // Flip horizontally to match Right Foot orientation
+      // Removed scale(-1, 1) flip - now matching natural orientation
       imageMode(CENTER);
       tint(100); // Dim the image slightly
       image(footImg, 0, 0, w * 0.8, h * 0.82);
@@ -49,7 +50,9 @@ class Heatmap {
     
     // Draw Heatmap Overlay
     for (int i = 0; i < 4; i++) {
-      float intensity = map(values[i], 0, 1023, 0, 1);
+      // Adjusted mapping: Now calibrated for the 850-1023 range
+      // This means colors start shifting only after crossing the 850 threshold
+      float intensity = map(values[i], 850, 1023, 0, 1);
       intensity = constrain(intensity, 0, 1);
       
       // Color gradient from Blue (cold) to Red (hot)
