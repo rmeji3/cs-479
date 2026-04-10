@@ -51,8 +51,10 @@ class Heatmap {
     // Draw Heatmap Overlay
     for (int i = 0; i < 4; i++) {
       // Adjusted mapping: Now calibrated for the 850-1023 range
-      // This means colors start shifting only after crossing the 850 threshold
-      float intensity = map(values[i], 850, 1023, 0, 1);
+      // Guard against NaN sensor values which cause map() to return NaN
+      float raw = values[i];
+      if (Float.isNaN(raw)) raw = 0;
+      float intensity = map(raw, 850, 1023, 0, 1);
       intensity = constrain(intensity, 0, 1);
       
       // Color gradient from Blue (cold) to Red (hot)

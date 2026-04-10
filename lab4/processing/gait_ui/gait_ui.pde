@@ -151,6 +151,11 @@ void drawRecordDashboard() {
     displayData = new float[]{0,0,0,0,0,0,0};
   }
 
+  // Sanitize any persisted NaNs before displaying
+  for (int i = 0; i < displayData.length; i++) {
+    if (Float.isNaN(displayData[i])) displayData[i] = 0;
+  }
+
   heat.update(displayData[0], displayData[1], displayData[2], displayData[3]);
   heat.display(style);
 
@@ -323,15 +328,30 @@ void serialEvent(Serial p) {
     String[] parts = split(val, ',');
     if (parts.length >= 10) {
       for (int i = 0; i < 10; i++) {
-        sensorData[i] = float(parts[i]);
+        float v = 0;
+        try {
+          v = Float.parseFloat(parts[i]);
+        } catch (Exception e) {
+          v = 0;
+        }
+        if (Float.isNaN(v)) v = 0;
+        sensorData[i] = v;
       }
 
-      // Calibrate accelerometer (apply offsets)
+      // Calibrate accelerometer (apply offsets) and guard against NaN
       float ax = sensorData[4] - accelOffsetX;
       float ay = sensorData[5] - accelOffsetY;
       float az = sensorData[6] - accelOffsetZ;
+      if (Float.isNaN(ax)) ax = 0;
+      if (Float.isNaN(ay)) ay = 0;
+      if (Float.isNaN(az)) az = 0;
 
-      float[] currentFrameDatas = {sensorData[0], sensorData[1], sensorData[2], sensorData[3], ax, ay, az};
+      // Sanitize FSRs before storing frame
+      float s0 = Float.isNaN(sensorData[0]) ? 0 : sensorData[0];
+      float s1 = Float.isNaN(sensorData[1]) ? 0 : sensorData[1];
+      float s2 = Float.isNaN(sensorData[2]) ? 0 : sensorData[2];
+      float s3 = Float.isNaN(sensorData[3]) ? 0 : sensorData[3];
+      float[] currentFrameDatas = {s0, s1, s2, s3, ax, ay, az};
 
       if (mode == 1 && isRecording) {
           recordedData.add(currentFrameDatas);
