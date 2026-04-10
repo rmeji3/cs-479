@@ -8,10 +8,10 @@
 #define PIN_FSR_HEEL A3 // Heel
 
 // LED Pins (PWM for intensity - User specified configuration)
-#define PIN_LED_MF 3
+#define PIN_LED_MF 6
 #define PIN_LED_LF 5
-#define PIN_LED_MM 9
-#define PIN_LED_HEEL 6
+#define PIN_LED_MM 3
+#define PIN_LED_HEEL 9
 
 // MPU-6050 usually uses I2C (SDA/SCL)
 // On FireBeetle 328P, SDA is A4 and SCL is A5
