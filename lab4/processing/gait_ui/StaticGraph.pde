@@ -47,15 +47,27 @@ class StaticGraph {
     line(startX, startY, startX, startY + graphH); // Y axis
 
     // Scale Logic
-    float floor = 0, ceil = 1023;
+    float floor = 0, ceil = 1024;
     if (title.contains("ACCELEROMETER")) {
       floor = -20;
       ceil = 20;
-      
+
       // Draw 0 line for accel
       stroke(30);
       float zeroY = map(0, floor, ceil, startY + graphH, startY);
       line(startX, zeroY, startX + graphW, zeroY);
+    }
+
+    // Draw Y axis labels and ticks
+    fill(Style.TEXT_DIM);
+    textSize(10);
+    textAlign(RIGHT, CENTER);
+    for (int i = 0; i <= 4; i++) {
+      float val = lerp(floor, ceil, i / 4.0);
+      float ty = map(val, floor, ceil, startY + graphH, startY);
+      text((int)val, startX - 10, ty);
+      stroke(45);
+      line(startX - 5, ty, startX, ty);
     }
 
     // Stream indices: FSR uses 0-3, Accel uses 4-6 in recordedData
@@ -96,11 +108,24 @@ class StaticGraph {
       stroke(40);
       line(tx, startY + graphH, tx, startY + graphH + 5);
     }
+    textAlign(CENTER, TOP);
+    text("TIME (SECONDS)", startX + graphW/2, startY + graphH + 35);
 
     // Interaction Line
     // Accurate mapping subtraction calculation:
     // mouseX is global. 100 is translation for dashboard. x is graph start within dashboard. startX is internal graph margin.
     float absoluteGraphStartX = 97 + x + startX;
+
+    // Y axis title (centered vertically and rotated)
+    pushMatrix();
+    translate(15, startY + graphH/2);
+    rotate(-HALF_PI);
+    fill(Style.TEXT_DIM);
+    textSize(10);
+    textAlign(CENTER, BOTTOM);
+    text(title.contains("ACCELEROMETER") ? "ACCEL (m/s²)" : "PRESSURE", 0, 0);
+    popMatrix();
+
     if (mouseX > absoluteGraphStartX && mouseX < absoluteGraphStartX + graphW && 
         mouseY > y + startY && mouseY < y + startY + graphH) {
       

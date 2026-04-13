@@ -50,6 +50,39 @@ class RealTimeGraph {
     line(startX, startY + graphH, startX + graphW, startY + graphH); // X axis
     line(startX, startY, startX, startY + graphH); // Y axis
 
+    // Draw Y axis labels and ticks
+    float floor, ceil;
+    if (title.contains("FSR")) {
+      floor = 0; 
+      ceil = 1024;
+    } else {
+      floor = -20;
+      ceil = 20; 
+    }
+
+    fill(Style.TEXT_DIM);
+    textSize(10);
+    textAlign(RIGHT, CENTER);
+    for (int i = 0; i <= 4; i++) {
+      float val = lerp(floor, ceil, i / 4.0);
+      float ty = map(val, floor, ceil, startY + graphH, startY);
+      text((int)val, startX - 10, ty);
+      stroke(45);
+      line(startX - 5, ty, startX, ty);
+    }
+
+    // X axis label
+    textAlign(CENTER, TOP);
+    text("TIME (SAMPLES)", startX + graphW/2, startY + graphH + 25);
+
+    // Y axis title (centered vertically and rotated)
+    pushMatrix();
+    translate(15, startY + graphH/2);
+    rotate(-HALF_PI);
+    textAlign(CENTER, BOTTOM);
+    text(title.contains("FSR") ? "PRESSURE" : "ACCEL (m/s²)", 0, 0);
+    popMatrix();
+
     // Draw data lines
     for (int i = 0; i < dataStreams.size(); i++) {
       stroke(colors[i % colors.length]);
@@ -59,18 +92,9 @@ class RealTimeGraph {
       FloatList stream = dataStreams.get(i);
       for (int j = 0; j < stream.size(); j++) {
         float vx = map(j, 0, maxPoints - 1, startX, startX + graphW);
-        
-        float floor, ceil;
-        if (title.contains("FSR")) {
-            floor = 0; 
-            ceil = 1023;
-        } else {
-            floor = -20;
-            ceil = 20; 
-        }
-        
-        float val = constrain(stream.get(j), floor, ceil);
-        float vy = map(val, floor, ceil, startY + graphH, startY); 
+
+        float vVal = constrain(stream.get(j), floor, ceil);
+        float vy = map(vVal, floor, ceil, startY + graphH, startY); 
         vertex(vx, vy);
       }
       endShape();
