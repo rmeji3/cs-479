@@ -51,16 +51,16 @@ void loop() {
 
   // Map filtered FSR values to LED brightness (PWM 0-255)
   // Fix: Convert fMF to int BEFORE map to prevent overflow/looping
-  // Increased threshold to 350 to reduce over-sensitivity
+  // Increased threshold slightly for better response
   int mMF = (int)fMF;
   int mLF = (int)fLF;
   int mMM = (int)fMM;
   int mHEEL = (int)fHEEL;
   
-  analogWrite(PIN_LED_MF, (mMF > 350) ? map(constrain(mMF, 350, 850), 350, 850, 0, 255) : 0);
-  analogWrite(PIN_LED_LF, (mLF > 350) ? map(constrain(mLF, 350, 850), 350, 850, 0, 255) : 0);
-  analogWrite(PIN_LED_MM, (mMM > 350) ? map(constrain(mMM, 350, 850), 350, 850, 0, 255) : 0);
-  analogWrite(PIN_LED_HEEL, (mHEEL > 350) ? map(constrain(mHEEL, 350, 850), 350, 850, 0, 255) : 0);
+  analogWrite(PIN_LED_MF,   (mMF > 350)   ? map(constrain(mMF, 350, 1023),   350, 1023, 0, 255) : 0);
+  analogWrite(PIN_LED_LF,   (mLF > 350)   ? map(constrain(mLF, 350, 1023),   350, 1023, 0, 255) : 0);
+  analogWrite(PIN_LED_HEEL, (mHEEL > 350) ? map(constrain(mHEEL, 350, 1023), 350, 1023, 0, 255) : 0);
+  analogWrite(PIN_LED_MM,   (mMM > 350)   ? map(constrain(mMM, 350, 1023),   350, 1023, 0, 255) : 0);
 
   // Get MPU-6050 data
   sensors_event_t a, g, temp;
@@ -71,13 +71,11 @@ void loop() {
   fAY = (alpha * a.acceleration.y) + ((1 - alpha) * fAY);
   fAZ = (alpha * a.acceleration.z) + ((1 - alpha) * fAZ);
 
-  // Send data to Serial for Processing (using filtered values)
-  // Format: MF,LF,MM,HEEL,accelX,accelY,accelZ,gyroX,gyroY,gyroZ
-  // Set UI deadzone to 300 to match LED sensitivity
+  // Send data to Serial for Processing (MF, LF, HEEL, MM)
   Serial.print((fMF > 300) ? (int)fMF : 0); Serial.print(",");
   Serial.print((fLF > 300) ? (int)fLF : 0); Serial.print(",");
-  Serial.print((fMM > 300) ? (int)fMM : 0); Serial.print(",");
   Serial.print((fHEEL > 300) ? (int)fHEEL : 0); Serial.print(",");
+  Serial.print((fMM > 300) ? (int)fMM : 0); Serial.print(",");
   Serial.print(fAX, 3); Serial.print(",");
   Serial.print(fAY, 3); Serial.print(",");
   Serial.print(fAZ, 3); Serial.print(",");

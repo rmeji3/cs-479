@@ -367,9 +367,10 @@ void serialEvent(Serial p) {
 
       // Update visualizations in LIVE mode OR while RECORDING
       if (mode == 0 || (mode == 1 && isRecording)) {
+          // Serial order from Arduino is now: MF, LF, HEEL, MM
           heat.update(sensorData[0], sensorData[1], sensorData[2], sensorData[3]);
 
-          float[] fsrs = {sensorData[0], sensorData[1], sensorData[2], sensorData[3]};
+          float[] fsrs = {sensorData[0], sensorData[1], sensorData[3], sensorData[2]}; // Reorder to: MF, LF, MM, HEEL for metrics
           fsrGraph.addData(fsrs);
 
           float[] accels = {ax, ay, az};
@@ -404,32 +405,33 @@ void calibrateAccel() {
 }
 
 void calculateGaitMetrics(float[] fsrs, float[] accels) {
+  // Mapping defined in Heatmap.pde is now identity (mf=mf, etc)
+  // These variables now represent correctly mapped physical locations
   float mf = fsrs[0];
   float lf = fsrs[1];
   float mm = fsrs[2];
   float heel = fsrs[3];
 
   // Instantaneous Medial Force Percentage Calculation
-  // Media side is MM (Medial Midfoot) and MF (Medial Forefoot)
-  // Total side is all 4 sensors
-  float rawMFP = ((mm + mf) * 100.0) / (mm + mf + lf + heel + 0.01);
+  // Total side for a foot is MM + MF + LF + HEEL
+  float totalPressure = mm + mf + lf + heel;
+  // Medial side for RIGHT foot = MM (Medial Midfoot) and MF (Medial Forefoot)
+  float rawMFP = ((mm + mf) * 100.0) / (totalPressure + 0.01);
   mfpValue = rawMFP;
 
   // Exponential Moving Average (EMA) for smoother display
-  // alpha of 0.1 means 10% new value, 90% old value
-  float alpha = 0.08;
-  mfpValueSmooth = (alpha * rawMFP) + ((1 - alpha) * mfpValueSmooth);
+  float alpha_ema = 0.08;
+  mfpValueSmooth = (alpha_ema * rawMFP) + ((1 - alpha_ema) * mfpValueSmooth);
 
   // Add raw value to history for longer-term profiling
   mfpHistory.add(rawMFP);
   if (mfpHistory.size() > historyLimit) mfpHistory.remove(0);
 
   // Step Detection (Basic threshold on total pressure)
-  float totalPressure = mf + lf + mm + heel;
   if (!inStance && totalPressure > stanceThreshold) {
     inStance = true;
     stepCount++;
-  } else if (inStance && totalPressure < stanceThreshold * 0.4) { // Slightly lower release threshold for cleaner steps
+  } else if (inStance && totalPressure < stanceThreshold * 0.4) {
     inStance = false;
   }
 
