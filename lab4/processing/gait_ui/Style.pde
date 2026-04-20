@@ -15,6 +15,18 @@ class Style {
     noStroke();
     rect(x, y, w, h, 12);
     
+    // Main card background with border
+    fill(PANEL);
+    stroke(BORDER);
+    strokeWeight(1);
+    rect(x, y, w, h, 12);
+    noStroke();
+    
+    // Title background gradient effect
+    fill(ACCENT_LIGHT);
+    rect(x, y, w, 45, 12, 12, 0, 0);
+    
+    // Title text
     fill(ACCENT);
     textSize(20);
     textAlign(LEFT, TOP);
