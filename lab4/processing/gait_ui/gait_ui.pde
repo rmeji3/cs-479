@@ -45,8 +45,8 @@ int motionDebounceLimit = 15; // Number of frames to confirm state change
 
 // Gait Profiling Buffers
 ArrayList<Float> mfpHistory = new ArrayList<Float>();
+ArrayList<Float> ffpHistory = new ArrayList<Float>(); // Forefoot Percentage history
 int historyLimit = 200; // Increased to ~4 seconds for better smoothing
-
 // Profile tracking
 String currentProfile = "Normal";
 
@@ -188,7 +188,8 @@ void drawRecordDashboard() {
     for (float[] d : recordedData) {
       float mf = d[0], lf = d[1], mm = d[2], heel = d[3];
       float total = mf + lf + mm + heel;
-      float mfp   = (mm + mf) * 100.0 / (total + 0.01);
+      float mfp   = (mm * 100.0) / (total + 0.01);
+      float ffp   = (mf + lf) * 100.0 / (total + 0.01);
       totalMFP  += mfp;
       peakTotal  = max(peakTotal, total);
       // Step detection (same threshold as live mode)
@@ -198,7 +199,11 @@ void drawRecordDashboard() {
 
     float avgMFP   = totalMFP / recordedData.size();
     float durSec   = recordDuration / 1000.0;
-    String profile = avgMFP > 58 ? "Pronation" : (avgMFP < 42 ? "Supination" : "Normal");
+    
+    // Logic: In-Toe is based primarily on MM pressure
+    String profile = "Normal";
+    if (avgMFP > 58) profile = "In-Toe";
+    else if (avgMFP < 15) profile = "Out-Toe";
 
     float tx = sx + 20, ty = sy + 62;
     float col2 = sx + 150;
@@ -409,23 +414,34 @@ void calculateGaitMetrics(float[] fsrs, float[] accels) {
   float mm = fsrs[2];
   float heel = fsrs[3];
 
-  // Instantaneous Medial Force Percentage Calculation
-  // Media side is MM (Medial Midfoot) and MF (Medial Forefoot)
   // Total side is all 4 sensors
-  float rawMFP = ((mm + mf) * 100.0) / (mm + mf + lf + heel + 0.01);
+  float totalPressure = mm + mf + lf + heel;
+
+  // Final corrected logic for In-Toe/Out-Toe:
+  // MM heavy = In-Toe, LF heavy = Out-Toe.
+  // Tip-Toe = MF heavy (front focus).
+  
+  // Percentage = (Medial sensors / total) * 100
+  // MF is technically medial but for this specific classification we'll use MM for In-Toe focus
+  float rawMFP = (mm * 100.0) / (totalPressure + 0.01);
   mfpValue = rawMFP;
+
+  // Forefoot Percentage (FFP) for Tip-Toe detection
+  // MF and LF are the front sensors
+  float rawFFP = ((mf + lf) * 100.0) / (totalPressure + 0.01);
 
   // Exponential Moving Average (EMA) for smoother display
   // alpha of 0.1 means 10% new value, 90% old value
   float alpha = 0.08;
   mfpValueSmooth = (alpha * rawMFP) + ((1 - alpha) * mfpValueSmooth);
 
-  // Add raw value to history for longer-term profiling
+  // Add raw values to history for longer-term profiling
   mfpHistory.add(rawMFP);
+  ffpHistory.add(rawFFP);
   if (mfpHistory.size() > historyLimit) mfpHistory.remove(0);
+  if (ffpHistory.size() > historyLimit) ffpHistory.remove(0);
 
   // Step Detection (Basic threshold on total pressure)
-  float totalPressure = mf + lf + mm + heel;
   if (!inStance && totalPressure > stanceThreshold) {
     inStance = true;
     stepCount++;
@@ -466,15 +482,22 @@ void updateGaitProfile() {
   float avgMFP = 0;
   for (float val : mfpHistory) avgMFP += val;
   avgMFP /= mfpHistory.size();
+  
+  float avgFFP = 0;
+  for (float val : ffpHistory) avgFFP += val;
+  avgFFP /= ffpHistory.size();
 
-  // Refined profiles based on Medial Force Percentage
+  // Refined profiles based on Medial Force Percentage and Forefoot Percentage
   // Typical Normal: 45-55%
-  // Pronation: > 60% (Heavier focus on medial side)
-  // Supination: < 40% (Heavier focus on lateral side)
-  if (avgMFP > 58) {
-    currentProfile = "Pronation";
+  // In-Toe: > 60% (Heavier focus on medial side)
+  // Out-Toe: < 40% (Heavier focus on lateral side)
+  // Tip-Toe: > 75% on forefoot (MF + LF)
+  if (avgFFP > 75) {
+    currentProfile = "Tip-Toe";
+  } else if (avgMFP > 58) {
+    currentProfile = "In-Toe";
   } else if (avgMFP < 42) {
-    currentProfile = "Supination";
+    currentProfile = "Out-Toe";
   } else {
     currentProfile = "Normal";
   }
