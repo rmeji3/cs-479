@@ -3,112 +3,124 @@
 #include <Adafruit_MPU6050.h>
 #include <Adafruit_Sensor.h>
 #include "SparkFun_Bio_Sensor_Hub_Library.h"
+#include <math.h>
 
 // ── Pin definitions ───────────────────────────────────
-#define MIC_PIN       36   // A0 - MAX9814 OUT
+#define MIC_PIN       39   // A1 - MAX9814 OUT
 #define MPU_INT_PIN   13   // D7
 #define RESET_PIN     14   // D8
 #define MFIO_PIN       2   // D9
+
+// ── Thresholds ────────────────────────────────────────
+// Blind spot: warn if an object is within 1.5 m on the left side
+#define BLIND_SPOT_MM       1500
+// Impact/fall: total accel magnitude above this (m/s²) triggers alert
+// Normal gravity ~9.8; a hard hit or drop spikes well above 20
+#define FALL_ACCEL_THRESH   20.0f
+
+// ── Mic sampling ─────────────────────────────────────
+// Fewer samples keeps the loop fast while still capturing peak amplitude
+#define MIC_SAMPLES   64
 
 // ── Sensor objects ────────────────────────────────────
 VL53L1X tof;
 Adafruit_MPU6050 mpu;
 SparkFun_Bio_Sensor_Hub bioHub(RESET_PIN, MFIO_PIN);
 
-// ── Mic sampling ─────────────────────────────────────
-#define MIC_SAMPLES   64
-
 unsigned long lastPrint = 0;
-#define PRINT_INTERVAL 500
+#define PRINT_INTERVAL 200   // ms — fast enough for real-time blind-spot feedback
 
 void setup() {
   Serial.begin(115200);
   delay(1000);
-  Serial.println("\n=== 4-Sensor Test ===\n");
 
   Wire.begin(); // SDA=IO21, SCL=IO22
 
   // ── VL53L1X ────────────────────────────────────────
-  Serial.print("[VL53L1X] Init... ");
   tof.setTimeout(500);
-  if (!tof.init()) {
-    Serial.println("FAILED - check SDA/SCL");
-    while (1);
-  }
+  if (!tof.init()) { while (1); }
   tof.setDistanceMode(VL53L1X::Long);
   tof.startContinuous(100);
-  Serial.println("OK");
 
   // ── MPU-6050 ───────────────────────────────────────
-  Serial.print("[MPU-6050] Init... ");
-  if (!mpu.begin()) {
-    Serial.println("FAILED - check SDA/SCL");
-    while (1);
-  }
+  if (!mpu.begin()) { while (1); }
   mpu.setAccelerometerRange(MPU6050_RANGE_8_G);
   mpu.setGyroRange(MPU6050_RANGE_500_DEG);
   mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
   pinMode(MPU_INT_PIN, INPUT);
-  Serial.println("OK");
 
   // ── MAX32664 (Pulse Ox) ────────────────────────────
-  Serial.print("[MAX32664] Init... ");
   int result = bioHub.begin(Wire, 0x55);
-  if (result != 0) {
-    Serial.print("FAILED (error ");
-    Serial.print(result);
-    Serial.println(") - check RESET/MFIO pins");
-    while (1);
-  }
+  if (result != 0) { while (1); }
   bioHub.configBpm(MODE_ONE);
   delay(4000);
-  Serial.println("OK");
 
   // ── MAX9814 ────────────────────────────────────────
-  Serial.print("[MAX9814] Init... ");
   pinMode(MIC_PIN, INPUT);
-  Serial.println("OK");
-
-  Serial.println("\n--- All sensors ready ---");
-  Serial.println("Dist(mm) | Ax    Ay    Az   | Gx    Gy    Gz   | SpO2 | BPM | Mic");
-  Serial.println("---------|------------------|------------------|------|-----|----");
 }
 
 void loop() {
   if (millis() - lastPrint < PRINT_INTERVAL) return;
   lastPrint = millis();
 
-  // ── VL53L1X ────────────────────────────────────────
+  // ── VL53L1X — left blind spot ──────────────────────
   uint16_t dist = tof.read(false);
-  if (tof.timeoutOccurred()) {
-    Serial.print("TIMEOUT  | ");
-  } else {
-    Serial.print(dist);
-    Serial.print("mm\t| ");
-  }
+  bool tofTimeout = tof.timeoutOccurred();
+  // Object detected if sensor returned a valid reading within threshold
+  bool blindSpot = !tofTimeout && (dist > 0) && (dist <= BLIND_SPOT_MM);
 
-  // ── MPU-6050 ───────────────────────────────────────
+  // ── MPU-6050 — fall / impact detection ─────────────
   sensors_event_t accel, gyro, temp;
   mpu.getEvent(&accel, &gyro, &temp);
-  Serial.print(accel.acceleration.x, 1); Serial.print("\t");
-  Serial.print(accel.acceleration.y, 1); Serial.print("\t");
-  Serial.print(accel.acceleration.z, 1); Serial.print("\t| ");
-  Serial.print(gyro.gyro.x, 1); Serial.print("\t");
-  Serial.print(gyro.gyro.y, 1); Serial.print("\t");
-  Serial.print(gyro.gyro.z, 1); Serial.print("\t| ");
+  float ax = accel.acceleration.x;
+  float ay = accel.acceleration.y;
+  float az = accel.acceleration.z;
+  float gx = gyro.gyro.x;
+  float gy = gyro.gyro.y;
+  float gz = gyro.gyro.z;
+  float accelMag = sqrtf(ax*ax + ay*ay + az*az);
+  bool fall = (accelMag >= FALL_ACCEL_THRESH);
 
-  // ── MAX32664 ───────────────────────────────────────
+  // ── MAX32664 — health metrics ───────────────────────
   bioData body = bioHub.readBpm();
-  Serial.print(body.oxygen);  Serial.print("\t| ");
-  Serial.print(body.heartRate); Serial.print("\t| ");
 
-  // ── MAX9814 mic ────────────────────────────────────
-  int peak = 0;
-  int baseline = 2048;
+  // ── MAX9814 — ambient sound level (left side) ───────
+  int micMin = 4095, micMax = 0;
   for (int i = 0; i < MIC_SAMPLES; i++) {
-    int val = abs(analogRead(MIC_PIN) - baseline);
-    if (val > peak) peak = val;
+    int val = analogRead(MIC_PIN);
+    if (val > micMax) micMax = val;
+    if (val < micMin) micMin = val;
     delayMicroseconds(100);
   }
-  Serial.println(peak);
+  int micPeak = micMax - micMin;
+
+  // ── Emit newline-delimited JSON ─────────────────────
+  // Frontend parses each line as a complete JSON object.
+  Serial.print("{");
+
+  // Blind spot (VL53L1X + mic together face left)
+  Serial.print("\"dist\":"); Serial.print(tofTimeout ? -1 : (int)dist); Serial.print(",");
+  Serial.print("\"blind_spot\":"); Serial.print(blindSpot ? "true" : "false"); Serial.print(",");
+
+  // Accelerometer / gyro raw + derived
+  Serial.print("\"ax\":"); Serial.print(ax, 2); Serial.print(",");
+  Serial.print("\"ay\":"); Serial.print(ay, 2); Serial.print(",");
+  Serial.print("\"az\":"); Serial.print(az, 2); Serial.print(",");
+  Serial.print("\"gx\":"); Serial.print(gx, 2); Serial.print(",");
+  Serial.print("\"gy\":"); Serial.print(gy, 2); Serial.print(",");
+  Serial.print("\"gz\":"); Serial.print(gz, 2); Serial.print(",");
+  Serial.print("\"accel_mag\":"); Serial.print(accelMag, 2); Serial.print(",");
+  Serial.print("\"fall\":"); Serial.print(fall ? "true" : "false"); Serial.print(",");
+
+  // Health metrics (pulse ox)
+  Serial.print("\"spo2\":"); Serial.print((int)body.oxygen); Serial.print(",");
+  Serial.print("\"bpm\":"); Serial.print((int)body.heartRate); Serial.print(",");
+
+  // Mic peak amplitude (0–4095 on 12-bit ADC)
+  Serial.print("\"mic\":"); Serial.print(micPeak); Serial.print(",");
+
+  // Timestamp (ms since boot) for frontend sequencing
+  Serial.print("\"ts\":"); Serial.print(millis());
+
+  Serial.println("}");
 }

@@ -1,148 +1,215 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { Bike, PlugZap, Wifi } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { useSerial } from '@/hooks/useSerial';
+import { useSensorData } from '@/hooks/useSensorData';
+import { BlindSpotRadar } from '@/components/BlindSpotRadar';
+import { CrashModal } from '@/components/CrashModal';
+import {
+  BLIND_SPOT_THRESHOLD_MM,
+  DISTANCE_DANGER_MM,
+  DISTANCE_WARNING_MM,
+  BPM_LOW,
+  BPM_HIGH,
+  SPO2_LOW,
+  FALL_THRESHOLD,
+} from '@/lib/constants';
 
+// ── Metric tile (Zwift-style) ─────────────────────────
+interface TileProps {
+  label: string;
+  value: string | number;
+  unit?: string;
+  valueColor?: string;
+  dimBg?: boolean;       // subtle tinted background for alerts
+}
+
+function MetricTile({ label, value, unit, valueColor, dimBg }: TileProps) {
+  return (
+    <div className={cn(
+      'flex flex-col justify-between p-4 lg:p-6 transition-colors duration-500',
+      dimBg && 'bg-red-500/10',
+    )}>
+      <p className="text-[11px] uppercase tracking-widest font-semibold text-zinc-500">{label}</p>
+      <div className="flex items-baseline gap-1.5 mt-2">
+        <span className={cn(
+          'text-5xl lg:text-6xl font-bold tabular-nums leading-none',
+          valueColor ?? 'text-white',
+        )}>
+          {value}
+        </span>
+        {unit && (
+          <span className="text-zinc-500 text-sm leading-none">{unit}</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Page ─────────────────────────────────────────────
 export default function Home() {
-  const [port, setPort] = useState<any>(null);
-  const [ports, setPorts] = useState<any[]>([]);
-  const [receivedData, setReceivedData] = useState<string[]>([]);
+  const serial = useSerial();
+  const { latest, fallAlert, blindSpotAlert, packetCount } = useSensorData(serial.onLine);
 
-  // Function to refresh the list of authorized ports
-  async function refreshPorts() {
-    if ('serial' in navigator) {
-      const authorizedPorts = await (navigator as any).serial.getPorts();
-      setPorts(authorizedPorts);
-    }
-  }
-
-  // 1. Request a port and open it
-  async function connectNewPort() {
-    try {
-      // Prompt user to select a serial port
-      const serialNavigator = navigator as any;
-      const newPort = await serialNavigator.serial.requestPort();
-      await openPort(newPort);
-      await refreshPorts();
-    } catch (err) {
-      console.error("Connection failed:", err);
-    }
-  }
-
-  async function openPort(selectedPort: any) {
-    try {
-      await selectedPort.open({ baudRate: 115200 });
-      setPort(selectedPort);
-      console.log("Connected to serial port!");
-
-      // Start reading in the background
-      readFromPort(selectedPort);
-    } catch (err) {
-      console.error("Failed to open port:", err);
-    }
-  }
-
-  async function readFromPort(selectedPort: any) {
-    const textDecoder = new TextDecoder();
-    while (selectedPort.readable) {
-      const reader = selectedPort.readable.getReader();
-      try {
-        while (true) {
-          const { value, done } = await reader.read();
-          if (done) break;
-          const decoded = textDecoder.decode(value);
-          setReceivedData(prev => [...prev.slice(-19), decoded]); // Keep last 20 messages
-          console.log(decoded);
-        }
-      } catch (error) {
-        console.error("Read error:", error);
-        break;
-      } finally {
-        reader.releaseLock();
-      }
-    }
-    setPort(null);
-  }
-
+  // Crash modal stays open until user dismisses (fallAlert auto-clears in hook, modal doesn't)
+  const [crashOpen, setCrashOpen] = useState(false);
   useEffect(() => {
-    refreshPorts();
-    
-    // Listen for disconnects
-    const handleDisconnect = () => refreshPorts();
-    if ('serial' in navigator) {
-      (navigator as any).serial.addEventListener('disconnect', handleDisconnect);
-      (navigator as any).serial.addEventListener('connect', handleDisconnect);
-    }
-    
-    return () => {
-      if ('serial' in navigator) {
-        (navigator as any).serial.removeEventListener('disconnect', handleDisconnect);
-        (navigator as any).serial.removeEventListener('connect', handleDisconnect);
-      }
-    };
-  }, []);
+    if (fallAlert) setCrashOpen(true);
+  }, [fallAlert]);
+
+  // ── Derived values ──────────────────────────────────
+  const dist      = latest?.dist      ?? -1;
+  const bpm       = latest?.bpm       ?? 0;
+  const spo2      = latest?.spo2      ?? 0;
+  const accelMag  = latest?.accel_mag ?? 0;
+
+  const distColor =
+    dist === -1               ? 'text-zinc-600' :
+    dist <= DISTANCE_DANGER_MM  ? 'text-red-400'    :
+    dist <= DISTANCE_WARNING_MM ? 'text-orange-400' :
+    dist <= BLIND_SPOT_THRESHOLD_MM ? 'text-yellow-400' : 'text-white';
+
+  const bpmColor =
+    bpm === 0                          ? 'text-zinc-600'  :
+    bpm < BPM_LOW || bpm > BPM_HIGH    ? 'text-red-400'   :
+    bpm > 120                          ? 'text-orange-400': 'text-white';
+
+  const spo2Color =
+    spo2 === 0       ? 'text-zinc-600'  :
+    spo2 < SPO2_LOW  ? 'text-red-400'   :
+    spo2 < 97        ? 'text-yellow-400': 'text-white';
+
+  const impactColor =
+    accelMag >= FALL_THRESHOLD ? 'text-red-400'    :
+    accelMag >= 15             ? 'text-orange-400' :
+    accelMag > 0               ? 'text-white'      : 'text-zinc-600';
+
+  function fmtDist(d: number): string {
+    if (d <= 0) return '—';
+    return d >= 1000 ? (d / 1000).toFixed(1) : String(d);
+  }
+  const distUnit = dist > 0 ? (dist >= 1000 ? 'm' : 'mm') : undefined;
 
   return (
-    <div className="flex flex-col min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-zinc-900 p-8 text-zinc-900 dark:text-zinc-100">
-      <div className="max-w-md w-full bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6 border border-zinc-200 dark:border-zinc-700">
-        <h1 className="text-2xl font-bold mb-6 text-center">Arduino Controller</h1>
-        
-        <div className="space-y-4">
-          <div className="flex flex-col gap-2">
-            <button 
-              onClick={connectNewPort}
-              className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
-            >
-              Connect New Device
-            </button>
-            <button 
-              onClick={refreshPorts}
-              className="w-full py-2 px-4 bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-600 rounded-lg font-medium transition-colors text-sm"
-            >
-              Refresh Paired Devices
-            </button>
-          </div>
+    <div className="h-screen bg-zinc-950 text-zinc-100 flex flex-col overflow-hidden select-none">
 
-          <div className="mt-6">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-zinc-500 mb-3">Paired Devices ({ports.length})</h2>
-            <div className="space-y-2 max-h-40 overflow-y-auto">
-              {ports.length === 0 ? (
-                <p className="text-zinc-400 italic text-sm">No paired devices found.</p>
-              ) : (
-                ports.map((p, i) => (
-                  <div key={i} className="flex items-center justify-between p-3 bg-zinc-100 dark:bg-zinc-700/50 rounded-lg border border-zinc-200 dark:border-zinc-700">
-                    <span className="text-sm font-mono truncate mr-2">Port {i + 1}</span>
-                    {port === p ? (
-                      <span className="text-xs bg-green-500/20 text-green-600 dark:text-green-400 px-2 py-1 rounded-full font-bold">ACTIVE</span>
-                    ) : (
-                      <button 
-                        disabled={!!port}
-                        onClick={() => openPort(p)}
-                        className="text-xs bg-zinc-200 dark:bg-zinc-600 hover:bg-zinc-300 dark:hover:bg-zinc-500 px-3 py-1 rounded-full transition-colors disabled:opacity-50"
-                      >
-                        {port ? 'Wait' : 'Connect'}
-                      </button>
-                    )}
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
+      {/* ── Header ───────────────────────────────────── */}
+      <header className="flex items-center justify-between px-4 h-11 border-b border-zinc-800 shrink-0">
+        <div className="flex items-center gap-2">
+          <Bike size={16} className="text-blue-400" />
+          <span className="text-sm font-bold tracking-tight">CycleWatch</span>
+        </div>
 
-          {port && (
-            <div className="mt-6 border-t border-zinc-200 dark:border-zinc-700 pt-6">
-              <h2 className="text-sm font-semibold uppercase tracking-wider text-zinc-500 mb-3">Live Feed</h2>
-              <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-3 h-48 overflow-y-auto font-mono text-xs text-white">
-                {receivedData.length === 0 ? (
-                  <span className="text-zinc-600">Waiting for data...</span>
-                ) : (
-                  receivedData.map((line, i) => (
-                    <div key={i} className="whitespace-pre-wrap">{line}</div>
-                  ))
-                )}
+        <div className="flex items-center gap-3">
+          {serial.status === 'connected' ? (
+            <div className="flex items-center gap-2.5">
+              <span className="text-[11px] font-mono text-zinc-600">{packetCount} pkts</span>
+              <div className="flex items-center gap-1 text-emerald-400 text-xs">
+                <Wifi size={12} />
+                <span>Connected</span>
               </div>
+              <button
+                onClick={serial.disconnect}
+                className="text-[11px] text-zinc-600 hover:text-red-400 border border-zinc-800
+                           hover:border-red-500/40 rounded px-2 py-0.5 transition-colors"
+              >
+                Disconnect
+              </button>
             </div>
+          ) : (
+            <button
+              onClick={serial.connect}
+              className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white
+                         border border-zinc-700 hover:border-zinc-500 rounded-lg px-3 py-1 transition-colors"
+            >
+              <PlugZap size={12} />
+              Connect Device
+            </button>
           )}
         </div>
+      </header>
+
+      {/* ── Main ─────────────────────────────────────── */}
+      <div className="flex flex-1 min-h-0">
+
+        {/* Left: blind spot radar */}
+        <div className="flex-1 min-w-0 border-r border-zinc-800">
+          <BlindSpotRadar
+            dist={dist}
+            mic={latest?.mic ?? 0}
+            blindSpotAlert={blindSpotAlert}
+          />
+        </div>
+
+        {/* Right: 2×2 metric grid
+            gap-px on a bg-zinc-800 container creates the 1px dividers between tiles */}
+        <div className="w-[42%] grid grid-cols-2 grid-rows-2 gap-px bg-zinc-800 shrink-0">
+
+          {/* Distance */}
+          <div className={cn('bg-zinc-950', blindSpotAlert && 'bg-orange-500/10 transition-colors duration-500')}>
+            <MetricTile
+              label="Distance"
+              value={fmtDist(dist)}
+              unit={distUnit}
+              valueColor={distColor}
+            />
+          </div>
+
+          {/* Heart Rate */}
+          <div className="bg-zinc-950">
+            <MetricTile
+              label="Heart Rate"
+              value={bpm === 0 ? '—' : bpm}
+              unit={bpm !== 0 ? 'bpm' : undefined}
+              valueColor={bpmColor}
+            />
+          </div>
+
+          {/* SpO₂ */}
+          <div className="bg-zinc-950">
+            <MetricTile
+              label="Blood Oxygen"
+              value={spo2 === 0 ? '—' : spo2}
+              unit={spo2 !== 0 ? '%' : undefined}
+              valueColor={spo2Color}
+            />
+          </div>
+
+          {/* Impact */}
+          <div className={cn('bg-zinc-950', accelMag >= FALL_THRESHOLD && 'bg-red-500/10 transition-colors duration-500')}>
+            <MetricTile
+              label="Impact"
+              value={accelMag === 0 ? '—' : accelMag.toFixed(1)}
+              unit={accelMag !== 0 ? 'm/s²' : undefined}
+              valueColor={impactColor}
+            />
+          </div>
+        </div>
       </div>
+
+      {/* ── Footer ───────────────────────────────────── */}
+      <footer className="h-8 flex items-center justify-between px-4 border-t border-zinc-800 shrink-0 text-[10px] text-zinc-700 font-mono">
+        <span>
+          AX {(latest?.ax ?? 0).toFixed(2)} ·
+          AY {(latest?.ay ?? 0).toFixed(2)} ·
+          AZ {(latest?.az ?? 0).toFixed(2)}
+        </span>
+        <span>
+          GX {(latest?.gx ?? 0).toFixed(2)} ·
+          GY {(latest?.gy ?? 0).toFixed(2)} ·
+          GZ {(latest?.gz ?? 0).toFixed(2)}
+        </span>
+        <span className={cn(
+          fallAlert      ? 'text-red-400 font-bold'    :
+          blindSpotAlert ? 'text-orange-400 font-bold' : '',
+        )}>
+          {fallAlert ? '⚠ FALL ALERT' : blindSpotAlert ? '⚠ BLIND SPOT' : 'No alerts'}
+        </span>
+      </footer>
+
+      {/* ── Crash modal ──────────────────────────────── */}
+      <CrashModal open={crashOpen} onDismiss={() => setCrashOpen(false)} />
     </div>
   );
 }
