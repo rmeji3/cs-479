@@ -1,17 +1,18 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Bike, PlugZap, Wifi } from 'lucide-react';
+import Link from 'next/link';
+import { Bike, PlugZap, Wifi, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useSerial } from '@/hooks/useSerial';
+import { useSerialContext } from '@/context/SerialContext';
 import { useSensorData } from '@/hooks/useSensorData';
+import { useSettings } from '@/hooks/useSettings';
 import { BlindSpotRadar } from '@/components/BlindSpotRadar';
 import { CrashModal } from '@/components/CrashModal';
+import { HRZoneGauge } from '@/components/HRZoneGauge';
 import {
   BLIND_SPOT_THRESHOLD_MM,
   DISTANCE_DANGER_MM,
   DISTANCE_WARNING_MM,
-  BPM_LOW,
-  BPM_HIGH,
   SPO2_LOW,
   FALL_THRESHOLD,
 } from '@/lib/constants';
@@ -49,8 +50,9 @@ function MetricTile({ label, value, unit, valueColor, dimBg }: TileProps) {
 
 // ── Page ─────────────────────────────────────────────
 export default function Home() {
-  const serial = useSerial();
+  const serial = useSerialContext();
   const { latest, fallAlert, blindSpotAlert, packetCount } = useSensorData(serial.onLine);
+  const { settings, maxHR } = useSettings();
 
   // Crash modal stays open until user dismisses (fallAlert auto-clears in hook, modal doesn't)
   const [crashOpen, setCrashOpen] = useState(false);
@@ -58,10 +60,16 @@ export default function Home() {
     if (fallAlert) setCrashOpen(true);
   }, [fallAlert]);
 
+  // ── Last-known HR / SpO2 (persist across gaps in data) ──
+  const [lastBpm,  setLastBpm]  = useState(0);
+  const [lastSpo2, setLastSpo2] = useState(0);
+  useEffect(() => { if ((latest?.bpm  ?? 0) > 0) setLastBpm(latest!.bpm);  }, [latest?.bpm]);
+  useEffect(() => { if ((latest?.spo2 ?? 0) > 0) setLastSpo2(latest!.spo2); }, [latest?.spo2]);
+
   // ── Derived values ──────────────────────────────────
   const dist      = latest?.dist      ?? -1;
-  const bpm       = latest?.bpm       ?? 0;
-  const spo2      = latest?.spo2      ?? 0;
+  const bpm       = lastBpm;
+  const spo2      = lastSpo2;
   const accelMag  = latest?.accel_mag ?? 0;
 
   const distColor =
@@ -69,11 +77,6 @@ export default function Home() {
     dist <= DISTANCE_DANGER_MM  ? 'text-red-400'    :
     dist <= DISTANCE_WARNING_MM ? 'text-orange-400' :
     dist <= BLIND_SPOT_THRESHOLD_MM ? 'text-yellow-400' : 'text-white';
-
-  const bpmColor =
-    bpm === 0                          ? 'text-zinc-600'  :
-    bpm < BPM_LOW || bpm > BPM_HIGH    ? 'text-red-400'   :
-    bpm > 120                          ? 'text-orange-400': 'text-white';
 
   const spo2Color =
     spo2 === 0       ? 'text-zinc-600'  :
@@ -102,9 +105,16 @@ export default function Home() {
         </div>
 
         <div className="flex items-center gap-3">
+          <Link
+            href="/settings"
+            className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-200
+                       border border-zinc-800 hover:border-zinc-600 rounded-lg px-2.5 py-1 transition-colors"
+          >
+            <Settings size={11} />
+            Settings
+          </Link>
           {serial.status === 'connected' ? (
             <div className="flex items-center gap-2.5">
-              <span className="text-[11px] font-mono text-zinc-600">{packetCount} pkts</span>
               <div className="flex items-center gap-1 text-emerald-400 text-xs">
                 <Wifi size={12} />
                 <span>Connected</span>
@@ -156,14 +166,9 @@ export default function Home() {
             />
           </div>
 
-          {/* Heart Rate */}
+          {/* Heart Rate — zone gauge */}
           <div className="bg-zinc-950">
-            <MetricTile
-              label="Heart Rate"
-              value={bpm === 0 ? '—' : bpm}
-              unit={bpm !== 0 ? 'bpm' : undefined}
-              valueColor={bpmColor}
-            />
+            <HRZoneGauge bpm={bpm} maxHR={maxHR} />
           </div>
 
           {/* SpO₂ */}
@@ -209,7 +214,12 @@ export default function Home() {
       </footer>
 
       {/* ── Crash modal ──────────────────────────────── */}
-      <CrashModal open={crashOpen} onDismiss={() => setCrashOpen(false)} />
+      <CrashModal
+        open={crashOpen}
+        onDismiss={() => setCrashOpen(false)}
+        emergencyName={settings.emergencyName}
+        emergencyPhone={settings.emergencyPhone}
+      />
     </div>
   );
 }
