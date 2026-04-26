@@ -6,12 +6,14 @@ import { cn } from '@/lib/utils';
 interface Props {
   open: boolean;
   onDismiss: () => void;
+  emergencyName?: string;
+  emergencyPhone?: string;
 }
 
 const HOLD_MS      = 2000; // ms user must hold button to dismiss
 const COUNTDOWN_S  = 10;   // seconds before contacting emergency contact
 
-export function CrashModal({ open, onDismiss }: Props) {
+export function CrashModal({ open, onDismiss, emergencyName, emergencyPhone }: Props) {
   const [countdown,    setCountdown]    = useState(COUNTDOWN_S);
   const [holdProgress, setHoldProgress] = useState(0);   // 0–100
   const [contacted,    setContacted]    = useState(false);
@@ -33,6 +35,14 @@ export function CrashModal({ open, onDismiss }: Props) {
         if (c <= 1) {
           clearInterval(countdownRef.current!);
           setContacted(true);
+          // Trigger Twilio call if emergency contact is configured
+          if (emergencyPhone) {
+            fetch('/api/emergency-call', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ to: emergencyPhone, contactName: emergencyName }),
+            }).catch(err => console.error('[CrashModal] Failed to call emergency contact:', err));
+          }
           return 0;
         }
         return c - 1;
@@ -80,7 +90,11 @@ export function CrashModal({ open, onDismiss }: Props) {
           </div>
           <div>
             <p className="text-2xl font-black text-white">Contacting Emergency Contact</p>
-            <p className="text-zinc-400 text-sm mt-2">Sending your location and crash data…</p>
+            <p className="text-zinc-400 text-sm mt-2">
+            {emergencyPhone
+              ? `Calling ${emergencyName || emergencyPhone}…`
+              : 'No emergency contact set. Add one in Settings.'}
+          </p>
           </div>
           <button
             onClick={onDismiss}

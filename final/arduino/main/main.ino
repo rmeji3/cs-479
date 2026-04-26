@@ -10,7 +10,10 @@
 #define MPU_INT_PIN   13   // D7
 #define RESET_PIN     14   // D8
 #define MFIO_PIN       2   // D9
-
+// ⚠ D1 = GPIO1 = hardware TX on most ESP32 boards.
+// Using it for an LED will corrupt Serial output.
+// If serial breaks, move this to a free pin (e.g. 4 = D4).
+#define LED_PIN        4   // D4
 // ── Thresholds ────────────────────────────────────────
 // Blind spot: warn if an object is within 1.5 m on the left side
 #define BLIND_SPOT_MM       1500
@@ -38,25 +41,43 @@ void setup() {
 
   // ── VL53L1X ────────────────────────────────────────
   tof.setTimeout(500);
-  if (!tof.init()) { while (1); }
+  if (!tof.init()) {
+    Serial.println("ERROR: VL53L1X init failed — check wiring");
+    while (1);
+  }
   tof.setDistanceMode(VL53L1X::Long);
   tof.startContinuous(100);
+  Serial.println("VL53L1X OK");
 
   // ── MPU-6050 ───────────────────────────────────────
-  if (!mpu.begin()) { while (1); }
+  if (!mpu.begin()) {
+    Serial.println("ERROR: MPU-6050 init failed — check wiring");
+    while (1);
+  }
   mpu.setAccelerometerRange(MPU6050_RANGE_8_G);
   mpu.setGyroRange(MPU6050_RANGE_500_DEG);
   mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
   pinMode(MPU_INT_PIN, INPUT);
+  Serial.println("MPU-6050 OK");
 
   // ── MAX32664 (Pulse Ox) ────────────────────────────
   int result = bioHub.begin(Wire, 0x55);
-  if (result != 0) { while (1); }
+  if (result != 0) {
+    Serial.print("ERROR: MAX32664 init failed, code ");
+    Serial.println(result);
+    while (1);
+  }
   bioHub.configBpm(MODE_ONE);
   delay(4000);
 
   // ── MAX9814 ────────────────────────────────────────
   pinMode(MIC_PIN, INPUT);
+
+  // LED
+  pinMode(LED_PIN, OUTPUT);
+  digitalWrite(LED_PIN, LOW);
+
+  Serial.println("Setup complete — streaming JSON");
 }
 
 void loop() {
@@ -101,6 +122,9 @@ void loop() {
   // Blind spot (VL53L1X + mic together face left)
   Serial.print("\"dist\":"); Serial.print(tofTimeout ? -1 : (int)dist); Serial.print(",");
   Serial.print("\"blind_spot\":"); Serial.print(blindSpot ? "true" : "false"); Serial.print(",");
+
+  // light led if blindspot is true
+  digitalWrite(LED_PIN, blindSpot ? HIGH : LOW);
 
   // Accelerometer / gyro raw + derived
   Serial.print("\"ax\":"); Serial.print(ax, 2); Serial.print(",");

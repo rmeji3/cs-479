@@ -143,7 +143,7 @@ export function BlindSpotRadar({ dist, mic, blindSpotAlert }: Props) {
       {/* ── Mic level bar ──────────────────────────── */}
       <div className="px-5 py-2.5 border-t border-zinc-800 space-y-1">
         <div className="flex justify-between text-[10px] text-zinc-600 uppercase tracking-wider">
-          <span>Ambient Sound</span>
+          <span>Noise Level</span>
           <span className="font-mono">{mic} / 4095</span>
         </div>
         <div className="h-1.5 rounded-full bg-zinc-800 overflow-hidden">

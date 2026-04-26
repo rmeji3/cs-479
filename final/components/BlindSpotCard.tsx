@@ -75,7 +75,7 @@ export function BlindSpotCard({ latest, blindSpotAlert }: Props) {
 
         {/* Mic */}
         <div className="flex items-center justify-between text-xs text-zinc-500">
-          <span>Ambient sound</span>
+          <span>Noise Level</span>
           <span className={cn('font-mono', mic > 800 ? 'text-yellow-400' : 'text-zinc-400')}>
             {mic} <span className="text-zinc-600">/ 4095</span>
           </span>
