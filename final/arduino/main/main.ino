@@ -5,41 +5,38 @@
 #include "SparkFun_Bio_Sensor_Hub_Library.h"
 #include <math.h>
 
-// ── Pin definitions ───────────────────────────────────
+//  Pin definitions 
 #define MIC_PIN       39   // A1 - MAX9814 OUT
 #define MPU_INT_PIN   13   // D7
 #define RESET_PIN     14   // D8
 #define MFIO_PIN       2   // D9
-// ⚠ D1 = GPIO1 = hardware TX on most ESP32 boards.
-// Using it for an LED will corrupt Serial output.
-// If serial breaks, move this to a free pin (e.g. 4 = D4).
 #define LED_PIN        4   // D4
-// ── Thresholds ────────────────────────────────────────
-// Blind spot: warn if an object is within 1.5 m on the left side
+//  Thresholds 
+// warn if an object is within 1.5 m on the left side
 #define BLIND_SPOT_MM       1500
-// Impact/fall: total accel magnitude above this (m/s²) triggers alert
-// Normal gravity ~9.8; a hard hit or drop spikes well above 20
+// Impact/fall: total accel magnitude above this m/s^2 triggers alert
+// a hard hit or drop spikes well above 20 given grav is 9.8
 #define FALL_ACCEL_THRESH   20.0f
 
-// ── Mic sampling ─────────────────────────────────────
+//  Mic sampling 
 // Fewer samples keeps the loop fast while still capturing peak amplitude
 #define MIC_SAMPLES   64
 
-// ── Sensor objects ────────────────────────────────────
+//  Sensor objects 
 VL53L1X tof;
 Adafruit_MPU6050 mpu;
 SparkFun_Bio_Sensor_Hub bioHub(RESET_PIN, MFIO_PIN);
 
 unsigned long lastPrint = 0;
-#define PRINT_INTERVAL 200   // ms — fast enough for real-time blind-spot feedback
+#define PRINT_INTERVAL 200  // 200 ms
 
 void setup() {
   Serial.begin(115200);
   delay(1000);
 
-  Wire.begin(); // SDA=IO21, SCL=IO22
+  Wire.begin();
 
-  // ── VL53L1X ────────────────────────────────────────
+  //  VL53L1X 
   tof.setTimeout(500);
   if (!tof.init()) {
     Serial.println("ERROR: VL53L1X init failed — check wiring");
@@ -49,7 +46,7 @@ void setup() {
   tof.startContinuous(100);
   Serial.println("VL53L1X OK");
 
-  // ── MPU-6050 ───────────────────────────────────────
+  //  MPU-6050 
   if (!mpu.begin()) {
     Serial.println("ERROR: MPU-6050 init failed — check wiring");
     while (1);
@@ -60,7 +57,7 @@ void setup() {
   pinMode(MPU_INT_PIN, INPUT);
   Serial.println("MPU-6050 OK");
 
-  // ── MAX32664 (Pulse Ox) ────────────────────────────
+  //  MAX32664 (Pulse Ox) 
   int result = bioHub.begin(Wire, 0x55);
   if (result != 0) {
     Serial.print("ERROR: MAX32664 init failed, code ");
@@ -70,7 +67,7 @@ void setup() {
   bioHub.configBpm(MODE_ONE);
   delay(4000);
 
-  // ── MAX9814 ────────────────────────────────────────
+  //  MAX9814 
   pinMode(MIC_PIN, INPUT);
 
   // LED
@@ -84,13 +81,13 @@ void loop() {
   if (millis() - lastPrint < PRINT_INTERVAL) return;
   lastPrint = millis();
 
-  // ── VL53L1X — left blind spot ──────────────────────
+  //  VL53L1X —  blind spot sensor
   uint16_t dist = tof.read(false);
   bool tofTimeout = tof.timeoutOccurred();
   // Object detected if sensor returned a valid reading within threshold
   bool blindSpot = !tofTimeout && (dist > 0) && (dist <= BLIND_SPOT_MM);
 
-  // ── MPU-6050 — fall / impact detection ─────────────
+  //  MPU-6050 — fall / impact detection 
   sensors_event_t accel, gyro, temp;
   mpu.getEvent(&accel, &gyro, &temp);
   float ax = accel.acceleration.x;
@@ -102,10 +99,10 @@ void loop() {
   float accelMag = sqrtf(ax*ax + ay*ay + az*az);
   bool fall = (accelMag >= FALL_ACCEL_THRESH);
 
-  // ── MAX32664 — health metrics ───────────────────────
+  //  MAX32664 — health metrics 
   bioData body = bioHub.readBpm();
 
-  // ── MAX9814 — ambient sound level (left side) ───────
+  //  MAX9814 — sound levels on blind side
   int micMin = 4095, micMax = 0;
   for (int i = 0; i < MIC_SAMPLES; i++) {
     int val = analogRead(MIC_PIN);
@@ -115,11 +112,10 @@ void loop() {
   }
   int micPeak = micMax - micMin;
 
-  // ── Emit newline-delimited JSON ─────────────────────
-  // Frontend parses each line as a complete JSON object.
+  // Frontend parses each line as a complete JSON object
   Serial.print("{");
 
-  // Blind spot (VL53L1X + mic together face left)
+  // Blind spot (VL53L1X + mic together)
   Serial.print("\"dist\":"); Serial.print(tofTimeout ? -1 : (int)dist); Serial.print(",");
   Serial.print("\"blind_spot\":"); Serial.print(blindSpot ? "true" : "false"); Serial.print(",");
 
@@ -140,10 +136,10 @@ void loop() {
   Serial.print("\"spo2\":"); Serial.print((int)body.oxygen); Serial.print(",");
   Serial.print("\"bpm\":"); Serial.print((int)body.heartRate); Serial.print(",");
 
-  // Mic peak amplitude (0–4095 on 12-bit ADC)
+  // Mic peak amplitude (0–4095)
   Serial.print("\"mic\":"); Serial.print(micPeak); Serial.print(",");
 
-  // Timestamp (ms since boot) for frontend sequencing
+  // Timestamp since start
   Serial.print("\"ts\":"); Serial.print(millis());
 
   Serial.println("}");

@@ -4,14 +4,6 @@ import Link from 'next/link';
 import { ArrowLeft, Heart, Phone, Save, Bike, CheckCircle2 } from 'lucide-react';
 import { useSettings } from '@/hooks/useSettings';
 
-const HR_ZONES = [
-  { name: 'Z1 · Warm-up',   range: [0.50, 0.60] as [number, number], color: 'bg-blue-500',   text: 'text-blue-400' },
-  { name: 'Z2 · Fat Burn',  range: [0.60, 0.70] as [number, number], color: 'bg-green-500',  text: 'text-green-400' },
-  { name: 'Z3 · Cardio',    range: [0.70, 0.80] as [number, number], color: 'bg-yellow-500', text: 'text-yellow-400' },
-  { name: 'Z4 · Threshold', range: [0.80, 0.90] as [number, number], color: 'bg-orange-500', text: 'text-orange-400' },
-  { name: 'Z5 · Max',       range: [0.90, 1.00] as [number, number], color: 'bg-red-500',    text: 'text-red-400' },
-];
-
 export default function SettingsPage() {
   const { settings, save, loaded } = useSettings();
 
@@ -20,7 +12,6 @@ export default function SettingsPage() {
   const [phone, setPhone] = useState(settings.emergencyPhone);
   const [saved, setSaved] = useState(false);
 
-  // Sync once localStorage is hydrated
   useEffect(() => {
     if (loaded) {
       setAge(String(settings.age));
@@ -69,7 +60,7 @@ export default function SettingsPage() {
 
       <div className="max-w-md mx-auto px-4 py-8 space-y-8">
 
-        {/* ── Heart Rate Zones ──────────────────────────── */}
+        {/*  Heart Rate Zones  */}
         <section className="space-y-3">
           <div className="flex items-center gap-2">
             <Heart size={14} className="text-red-400" />
@@ -105,37 +96,11 @@ export default function SettingsPage() {
                 <span className="ml-auto text-2xl font-black text-red-400 tabular-nums">{maxHR}</span>
                 <span className="text-zinc-500 text-xs">bpm</span>
               </div>
-
-              {/* Zone breakdown */}
-              <div className="space-y-1.5">
-                {HR_ZONES.map(z => {
-                  const lo = Math.round(z.range[0] * maxHR);
-                  const hi = Math.round(z.range[1] * maxHR);
-                  // Bar width relative to 100% maxHR
-                  const barLeft  = z.range[0] * 100;
-                  const barWidth = (z.range[1] - z.range[0]) * 100;
-                  return (
-                    <div key={z.name} className="flex items-center gap-2 text-xs">
-                      <div className={`w-2 h-2 rounded-full shrink-0 ${z.color}`} />
-                      <span className={`w-28 shrink-0 ${z.text}`}>{z.name}</span>
-                      <div className="flex-1 relative h-1 bg-zinc-800 rounded-full overflow-hidden">
-                        <div
-                          className={`absolute h-full rounded-full ${z.color}`}
-                          style={{ left: `${barLeft}%`, width: `${barWidth}%` }}
-                        />
-                      </div>
-                      <span className="text-zinc-500 tabular-nums font-mono w-20 text-right shrink-0">
-                        {lo}–{hi} bpm
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
             </div>
           </div>
         </section>
 
-        {/* ── Emergency Contact ─────────────────────────── */}
+        {/*  Emergency Contact  */}
         <section className="space-y-3">
           <div className="flex items-center gap-2">
             <Phone size={14} className="text-emerald-400" />
@@ -157,7 +122,7 @@ export default function SettingsPage() {
                 type="text"
                 value={name}
                 onChange={e => setName(e.target.value)}
-                placeholder="Jane Smith"
+                placeholder="First Last"
                 autoComplete="off"
                 className="w-full bg-zinc-800 border border-zinc-700 hover:border-zinc-600
                            focus:border-blue-500 focus:outline-none
@@ -182,12 +147,11 @@ export default function SettingsPage() {
                              focus:outline-none font-mono tracking-wide"
                 />
               </div>
-              <p className="text-[10px] text-zinc-600">US/Canada numbers only (auto +1)</p>
             </div>
           </div>
         </section>
 
-        {/* ── Save ─────────────────────────────────────── */}
+        {/*  Save  */}
         <button
           onClick={handleSave}
           className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl font-bold text-sm

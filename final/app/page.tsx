@@ -17,7 +17,7 @@ import {
   FALL_THRESHOLD,
 } from '@/lib/constants';
 
-// ── Metric tile (Zwift-style) ─────────────────────────
+//  Metric tile 
 interface TileProps {
   label: string;
   value: string | number;
@@ -48,7 +48,7 @@ function MetricTile({ label, value, unit, valueColor, dimBg }: TileProps) {
   );
 }
 
-// ── Page ─────────────────────────────────────────────
+//  Page 
 export default function Home() {
   const serial = useSerialContext();
   const { latest, fallAlert, blindSpotAlert, packetCount } = useSensorData(serial.onLine);
@@ -60,13 +60,13 @@ export default function Home() {
     if (fallAlert) setCrashOpen(true);
   }, [fallAlert]);
 
-  // ── Last-known HR / SpO2 (persist across gaps in data) ──
+  //  Last-known HR / SpO2 (persist across gaps in data) 
   const [lastBpm,  setLastBpm]  = useState(0);
   const [lastSpo2, setLastSpo2] = useState(0);
   useEffect(() => { if ((latest?.bpm  ?? 0) > 0) setLastBpm(latest!.bpm);  }, [latest?.bpm]);
   useEffect(() => { if ((latest?.spo2 ?? 0) > 0) setLastSpo2(latest!.spo2); }, [latest?.spo2]);
 
-  // ── Derived values ──────────────────────────────────
+  //  Derived values 
   const dist      = latest?.dist      ?? -1;
   const bpm       = lastBpm;
   const spo2      = lastSpo2;
@@ -97,7 +97,7 @@ export default function Home() {
   return (
     <div className="h-screen bg-zinc-950 text-zinc-100 flex flex-col overflow-hidden select-none">
 
-      {/* ── Header ───────────────────────────────────── */}
+      {/*  Header  */}
       <header className="flex items-center justify-between px-4 h-11 border-b border-zinc-800 shrink-0">
         <div className="flex items-center gap-2">
           <Bike size={16} className="text-blue-400" />
@@ -140,7 +140,7 @@ export default function Home() {
         </div>
       </header>
 
-      {/* ── Main ─────────────────────────────────────── */}
+      {/*  Main  */}
       <div className="flex flex-1 min-h-0">
 
         {/* Left: blind spot radar */}
@@ -166,7 +166,7 @@ export default function Home() {
             />
           </div>
 
-          {/* Heart Rate — zone gauge */}
+          {/* Heart Rate : zone gauge */}
           <div className="bg-zinc-950">
             <HRZoneGauge bpm={bpm} maxHR={maxHR} />
           </div>
@@ -193,7 +193,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* ── Footer ───────────────────────────────────── */}
+      {/*  Footer  */}
       <footer className="h-8 flex items-center justify-between px-4 border-t border-zinc-800 shrink-0 text-[10px] text-zinc-700 font-mono">
         <span>
           AX {(latest?.ax ?? 0).toFixed(2)} ·
