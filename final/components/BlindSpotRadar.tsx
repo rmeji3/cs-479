@@ -12,14 +12,14 @@ interface Props {
   blindSpotAlert: boolean;
 }
 
-// ── Radar geometry ────────────────────────────────────────────────────────────
+//  Radar geometry 
 // Bike sits at the right edge; the radar sweeps left.
 const CX = 370;   // px — bike x position (right side)
 const CY = 180;   // px — vertical center
 const MAX_R = 310; // px — maps to BLIND_SPOT_THRESHOLD_MM
 
-const dangerR  = (DISTANCE_DANGER_MM  / BLIND_SPOT_THRESHOLD_MM) * MAX_R; // ~103px
-const warningR = (DISTANCE_WARNING_MM / BLIND_SPOT_THRESHOLD_MM) * MAX_R; // ~207px
+const dangerR  = (DISTANCE_DANGER_MM  / BLIND_SPOT_THRESHOLD_MM) * MAX_R; 
+const warningR = (DISTANCE_WARNING_MM / BLIND_SPOT_THRESHOLD_MM) * MAX_R; 
 
 function toX(distMm: number) {
   return CX - (distMm / BLIND_SPOT_THRESHOLD_MM) * MAX_R;
@@ -46,8 +46,8 @@ export function BlindSpotRadar({ dist, mic, blindSpotAlert }: Props) {
                                   '#eab308';
 
   return (
-    <div className="w-full h-full flex flex-col bg-zinc-950">
-      {/* ── Radar SVG ──────────────────────────────── */}
+    <div className="w-full h-full flex flex-col bg-white">
+      {/*  Radar SVG  */}
       <div className="flex-1 relative overflow-hidden">
         <svg
           viewBox="0 0 400 360"
@@ -62,11 +62,11 @@ export function BlindSpotRadar({ dist, mic, blindSpotAlert }: Props) {
             </clipPath>
           </defs>
 
-          <rect width="400" height="360" fill="#09090b" />
+          <rect width="400" height="360" fill="#ffffff" />
 
           {/* Subtle lane guide lines */}
-          <line x1="170" y1="0" x2="170" y2="360" stroke="#18181b" strokeWidth="2" strokeDasharray="10 8" />
-          <line x1="340" y1="0" x2="340" y2="360" stroke="#18181b" strokeWidth="2" strokeDasharray="10 8" />
+          <line x1="170" y1="0" x2="170" y2="360" stroke="#e4e4e7" strokeWidth="2" strokeDasharray="10 8" />
+          <line x1="340" y1="0" x2="340" y2="360" stroke="#e4e4e7" strokeWidth="2" strokeDasharray="10 8" />
 
           {/* ── Zone fills + ring arcs (clipped) ── */}
           <g clipPath="url(#radarBand)">
@@ -83,15 +83,15 @@ export function BlindSpotRadar({ dist, mic, blindSpotAlert }: Props) {
           <line
             x1={CX - MAX_R - 10} y1={CY}
             x2={CX}              y2={CY}
-            stroke="#27272a" strokeWidth="1" strokeDasharray="4 4"
+            stroke="#d4d4d8" strokeWidth="1" strokeDasharray="4 4"
           />
 
           {/* Zone labels */}
-          <text x={CX - dangerR / 2}                     y={CY - 12} textAnchor="middle" fontSize="8" fill="rgba(239,68,68,0.55)"  fontFamily="monospace">500mm</text>
-          <text x={CX - (dangerR + warningR) / 2}        y={CY - 12} textAnchor="middle" fontSize="8" fill="rgba(249,115,22,0.55)" fontFamily="monospace">1 m</text>
-          <text x={CX - (warningR + MAX_R) / 2}          y={CY - 12} textAnchor="middle" fontSize="8" fill="rgba(234,179,8,0.55)"  fontFamily="monospace">1.5 m</text>
+          <text x={CX - dangerR / 2}                     y={CY - 12} textAnchor="middle" fontSize="8" fill="rgba(239,68,68,0.55)"  fontFamily="monospace">20 in</text>
+          <text x={CX - (dangerR + warningR) / 2}        y={CY - 12} textAnchor="middle" fontSize="8" fill="rgba(249,115,22,0.55)" fontFamily="monospace">3.3 ft</text>
+          <text x={CX - (warningR + MAX_R) / 2}          y={CY - 12} textAnchor="middle" fontSize="8" fill="rgba(234,179,8,0.55)"  fontFamily="monospace">5 ft</text>
 
-          {/* ── Object indicator ───────────────────── */}
+          {/*  Object indicator  */}
           {hasObj && (
             <>
               <line
@@ -102,29 +102,29 @@ export function BlindSpotRadar({ dist, mic, blindSpotAlert }: Props) {
             </>
           )}
 
-          {/* ── Rider icon ─────────────────────────── */}
+          {/*  Rider icon  */}
           <circle cx={CX} cy={CY} r="26" fill="#1d4ed8" opacity="0.95" />
           <circle cx={CX} cy={CY} r="26" fill="none" stroke="#60a5fa" strokeWidth="1.5" opacity="0.6" />
           {/* Lucide "Bike" icon paths (24×24 viewBox) scaled + centred */}
-          <g transform={`translate(${CX - 14}, ${CY - 14}) scale(1.17)`} stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none">
+          <g transform={`translate(${CX}, ${CY}) rotate(-45) translate(-14, -14) scale(1.17)`} stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none">
             <circle cx="18.5" cy="17.5" r="3.5" />
             <circle cx="5.5"  cy="17.5" r="3.5" />
             <circle cx="15"   cy="5"    r="1"   />
             <path d="M12 17.5V14l-3-3 4-3 2 3h2" />
           </g>
 
-          {/* ── Info overlay ───────────────────────── */}
+          {/*  Info overlay  */}
           <text x="14" y="24"
-            fontSize="10" fill="#52525b"
+            fontSize="10" fill="#71717a"
             fontFamily="monospace" letterSpacing="0.08em"
           >LEFT BLIND SPOT</text>
 
           {dist > 0 && dist !== -1 ? (
             <text x="14" y="44" fontSize="15" fill={objColor} fontFamily="monospace" fontWeight="700">
-              {dist < 1000 ? `${dist} mm` : `${(dist / 1000).toFixed(2)} m`}
+              {dist < 304.8 ? `${(dist / 25.4).toFixed(1)} in` : `${(dist / 304.8).toFixed(1)} ft`}
             </text>
           ) : (
-            <text x="14" y="44" fontSize="12" fill="#3f3f46" fontFamily="monospace">no reading</text>
+            <text x="14" y="44" fontSize="12" fill="#a1a1aa" fontFamily="monospace">no reading</text>
           )}
 
           {/* Blind spot warning text */}
@@ -140,13 +140,13 @@ export function BlindSpotRadar({ dist, mic, blindSpotAlert }: Props) {
         </svg>
       </div>
 
-      {/* ── Mic level bar ──────────────────────────── */}
-      <div className="px-5 py-2.5 border-t border-zinc-800 space-y-1">
+      {/*  Mic level bar  */}
+      <div className="px-5 py-2.5 border-t border-zinc-200 space-y-1">
         <div className="flex justify-between text-[10px] text-zinc-600 uppercase tracking-wider">
           <span>Noise Level</span>
           <span className="font-mono">{mic} / 4095</span>
         </div>
-        <div className="h-1.5 rounded-full bg-zinc-800 overflow-hidden">
+        <div className="h-1.5 rounded-full bg-zinc-200 overflow-hidden">
           <div
             className={cn(
               'h-full rounded-full transition-all duration-150',

@@ -80,17 +80,17 @@ export function CrashModal({ open, onDismiss, emergencyName, emergencyPhone }: P
   const circ = 2 * Math.PI * r;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/95 backdrop-blur-sm">
       {contacted ? (
-        /* ── Emergency contacted screen ────────────── */
+        /*  Emergency contacted screen  */
         <div className="text-center space-y-6 px-8 max-w-sm w-full">
-          <div className="w-20 h-20 rounded-full bg-green-500/20 border-2 border-green-500/40
+          <div className="w-20 h-20 rounded-full bg-green-500/10 border-2 border-green-500/60
                           flex items-center justify-center mx-auto">
-            <Phone size={36} className="text-green-400 animate-pulse" />
+            <Phone size={36} className="text-green-600 animate-pulse" />
           </div>
           <div>
-            <p className="text-2xl font-black text-white">Contacting Emergency Contact</p>
-            <p className="text-zinc-400 text-sm mt-2">
+            <p className="text-2xl font-black text-zinc-950">Contacting Emergency Contact</p>
+            <p className="text-zinc-600 text-sm mt-2">
             {emergencyPhone
               ? `Calling ${emergencyName || emergencyPhone}…`
               : 'No emergency contact set. Add one in Settings.'}
@@ -98,23 +98,23 @@ export function CrashModal({ open, onDismiss, emergencyName, emergencyPhone }: P
           </div>
           <button
             onClick={onDismiss}
-            className="text-xs text-zinc-600 underline underline-offset-4 hover:text-zinc-400 transition-colors"
+            className="text-xs text-zinc-600 underline underline-offset-4 hover:text-zinc-900 transition-colors"
           >
             I'm OK — dismiss
           </button>
         </div>
       ) : (
-        /* ── Hold-to-dismiss countdown screen ──────── */
+        /*  Hold-to-dismiss countdown screen  */
         <div className="text-center space-y-8 max-w-xs w-full px-6">
           {/* Icon + title */}
           <div className="space-y-4">
-            <div className="w-20 h-20 rounded-full bg-red-500/20 border-2 border-red-500/50
+            <div className="w-20 h-20 rounded-full bg-red-500/10 border-2 border-red-500/60
                             flex items-center justify-center mx-auto">
-              <AlertTriangle size={36} className="text-red-400" />
+              <AlertTriangle size={36} className="text-red-600" />
             </div>
             <div>
-              <h1 className="text-3xl font-black text-white tracking-tight">CRASH DETECTED</h1>
-              <p className="text-zinc-400 text-sm mt-1">
+              <h1 className="text-3xl font-black text-zinc-950 tracking-tight">CRASH DETECTED</h1>
+              <p className="text-zinc-600 text-sm mt-1">
                 Emergency contact will be notified in
               </p>
             </div>
@@ -124,7 +124,7 @@ export function CrashModal({ open, onDismiss, emergencyName, emergencyPhone }: P
           <div
             className={cn(
               'text-9xl font-black font-mono tabular-nums leading-none',
-              countdown <= 3 ? 'text-red-400 animate-pulse' : 'text-white',
+              countdown <= 3 ? 'text-red-600 animate-pulse' : 'text-zinc-950',
             )}
           >
             {countdown}
@@ -145,7 +145,7 @@ export function CrashModal({ open, onDismiss, emergencyName, emergencyPhone }: P
                 width="96" height="96" viewBox="0 0 96 96"
               >
                 {/* Track */}
-                <circle cx="48" cy="48" r={r} fill="none" stroke="#27272a" strokeWidth="7" />
+                <circle cx="48" cy="48" r={r} fill="none" stroke="#e4e4e7" strokeWidth="7" />
                 {/* Fill */}
                 <circle
                   cx="48" cy="48" r={r}
@@ -160,13 +160,13 @@ export function CrashModal({ open, onDismiss, emergencyName, emergencyPhone }: P
               </svg>
 
               {/* Center icon */}
-              <div className="absolute inset-2 rounded-full bg-zinc-800 border border-zinc-700
+              <div className="absolute inset-2 rounded-full bg-zinc-100 border border-zinc-300
                               flex items-center justify-center pointer-events-none">
-                <ShieldCheck size={24} className="text-emerald-400" />
+                <ShieldCheck size={24} className="text-emerald-600" />
               </div>
             </div>
 
-            <p className="text-xs text-zinc-500">Hold to confirm you're OK</p>
+            <p className="text-xs text-zinc-600">Hold to confirm you're OK</p>
           </div>
         </div>
       )}

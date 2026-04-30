@@ -22,7 +22,7 @@ export function HRZoneGauge({ bpm, maxHR }: Props) {
 
   return (
     <div className="flex flex-col h-full p-4 lg:p-6">
-      <p className="text-[11px] uppercase tracking-widest font-semibold text-zinc-500">Heart Rate</p>
+      <p className="text-[11px] uppercase tracking-widest font-semibold text-zinc-600">Heart Rate</p>
 
       <div className="flex-1 flex flex-col items-center justify-center -mt-2">
         <GaugeComponent
@@ -53,7 +53,7 @@ export function HRZoneGauge({ bpm, maxHR }: Props) {
             valueLabel: {
               formatTextValue: () => bpm > 0 ? `${bpm}` : '—',
               style: {
-                fill: bpm > 0 ? zone.color : '#52525b',
+                fill: bpm > 0 ? zone.color : '#a1a1aa',
                 fontSize: '38px',
                 fontWeight: '900',
                 textShadow: 'none',
@@ -63,7 +63,7 @@ export function HRZoneGauge({ bpm, maxHR }: Props) {
               type: 'outer',
               defaultTickValueConfig: {
                 formatTextValue: (v: number) => String(Math.round(v)),
-                style: { fontSize: '9px', fill: '#52525b' },
+                style: { fontSize: '9px', fill: '#71717a' },
               },
               ticks: [
                 { value: Math.round(max * 0.50) },

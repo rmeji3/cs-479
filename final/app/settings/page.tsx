@@ -39,18 +39,18 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100">
+    <div className="min-h-screen bg-white text-zinc-950">
 
       {/* Header */}
-      <header className="flex items-center gap-3 px-4 h-11 border-b border-zinc-800 shrink-0">
+      <header className="flex items-center gap-3 px-4 h-11 border-b border-zinc-200 shrink-0">
         <div className="flex items-center gap-2">
           <Bike size={16} className="text-blue-400" />
           <span className="text-sm font-bold tracking-tight">CycleWatch</span>
         </div>
-        <span className="text-zinc-700 text-xs">·</span>
+        <span className="text-zinc-400 text-xs">·</span>
         <Link
           href="/"
-          className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-200 transition-colors"
+          className="flex items-center gap-1.5 text-xs text-zinc-600 hover:text-zinc-900 transition-colors"
         >
           <ArrowLeft size={12} />
           Dashboard
@@ -69,11 +69,11 @@ export default function SettingsPage() {
             </h2>
           </div>
 
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 space-y-5">
+          <div className="bg-white border border-zinc-200 rounded-2xl p-5 space-y-5">
 
             {/* Age input */}
             <div className="flex items-center gap-4">
-              <label htmlFor="age-input" className="text-sm text-zinc-400 shrink-0">Your Age</label>
+              <label htmlFor="age-input" className="text-sm text-zinc-600 shrink-0">Your Age</label>
               <input
                 id="age-input"
                 type="number"
@@ -82,18 +82,18 @@ export default function SettingsPage() {
                 value={age}
                 onChange={e => setAge(e.target.value)}
                 onBlur={() => setAge(String(ageNum))}
-                className="w-24 bg-zinc-800 border border-zinc-700 hover:border-zinc-600
+                className="w-24 bg-zinc-100 border border-zinc-300 hover:border-zinc-400
                            focus:border-blue-500 focus:outline-none
-                           rounded-lg px-3 py-2.5 text-3xl font-black tabular-nums text-white
+                           rounded-lg px-3 py-2.5 text-3xl font-black tabular-nums text-zinc-950
                            text-center transition-colors"
               />
             </div>
 
             {/* Max HR result */}
-            <div className="pt-1 border-t border-zinc-800 space-y-3">
+              <div className="pt-1 border-t border-zinc-200 space-y-3">
               <div className="flex items-baseline gap-2">
-                <p className="text-xs text-zinc-500">Max HR <span className="text-zinc-700">(220 − age)</span></p>
-                <span className="ml-auto text-2xl font-black text-red-400 tabular-nums">{maxHR}</span>
+                <p className="text-xs text-zinc-600">Max HR <span className="text-zinc-500">(220 − age)</span></p>
+                <span className="ml-auto text-2xl font-black text-red-600 tabular-nums">{maxHR}</span>
                 <span className="text-zinc-500 text-xs">bpm</span>
               </div>
             </div>
@@ -103,20 +103,20 @@ export default function SettingsPage() {
         {/*  Emergency Contact  */}
         <section className="space-y-3">
           <div className="flex items-center gap-2">
-            <Phone size={14} className="text-emerald-400" />
-            <h2 className="text-xs font-bold uppercase tracking-widest text-zinc-400">
+            <Phone size={14} className="text-emerald-600" />
+            <h2 className="text-xs font-bold uppercase tracking-widest text-zinc-600">
               Emergency Contact
             </h2>
           </div>
 
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 space-y-4">
-            <p className="text-xs text-zinc-500 leading-relaxed">
+          <div className="bg-white border border-zinc-200 rounded-2xl p-5 space-y-4">
+            <p className="text-xs text-zinc-600 leading-relaxed">
               If a crash is detected and you don't dismiss the alert within 10 seconds, this
               contact will receive an automated phone call via Twilio.
             </p>
 
             <div className="space-y-1.5">
-              <label className="text-xs text-zinc-400" htmlFor="contact-name">Name</label>
+              <label className="text-xs text-zinc-600" htmlFor="contact-name">Name</label>
               <input
                 id="contact-name"
                 type="text"
@@ -124,18 +124,18 @@ export default function SettingsPage() {
                 onChange={e => setName(e.target.value)}
                 placeholder="First Last"
                 autoComplete="off"
-                className="w-full bg-zinc-800 border border-zinc-700 hover:border-zinc-600
+                className="w-full bg-zinc-100 border border-zinc-300 hover:border-zinc-400
                            focus:border-blue-500 focus:outline-none
-                           rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-zinc-600
+                           rounded-lg px-3 py-2.5 text-sm text-zinc-950 placeholder:text-zinc-500
                            transition-colors"
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs text-zinc-400" htmlFor="contact-phone">Phone Number</label>
-              <div className="flex items-center bg-zinc-800 border border-zinc-700 hover:border-zinc-600
+              <label className="text-xs text-zinc-600" htmlFor="contact-phone">Phone Number</label>
+              <div className="flex items-center bg-zinc-100 border border-zinc-300 hover:border-zinc-400
                               focus-within:border-blue-500 rounded-lg overflow-hidden transition-colors">
-                <span className="px-3 text-sm text-zinc-500 font-mono shrink-0 border-r border-zinc-700 py-2.5">+1</span>
+                <span className="px-3 text-sm text-zinc-600 font-mono shrink-0 border-r border-zinc-300 py-2.5">+1</span>
                 <input
                   id="contact-phone"
                   type="tel"
@@ -143,7 +143,7 @@ export default function SettingsPage() {
                   onChange={e => handlePhoneChange(e.target.value)}
                   placeholder="555 000 1234"
                   autoComplete="off"
-                  className="flex-1 bg-transparent px-3 py-2.5 text-sm text-white placeholder:text-zinc-600
+                  className="flex-1 bg-transparent px-3 py-2.5 text-sm text-zinc-950 placeholder:text-zinc-500
                              focus:outline-none font-mono tracking-wide"
                 />
               </div>

@@ -6,10 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { UseSerialReturn, ConnectionStatus } from '@/hooks/useSerial';
 
 const STATUS_STYLES: Record<ConnectionStatus, string> = {
-  connected: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
-  connecting: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
-  disconnected: 'bg-zinc-500/20 text-zinc-400 border-zinc-500/30',
-  error: 'bg-red-500/20 text-red-400 border-red-500/30',
+  connected: 'bg-emerald-100 text-emerald-700 border-emerald-300',
+  connecting: 'bg-yellow-100 text-yellow-700 border-yellow-300',
+  disconnected: 'bg-zinc-200 text-zinc-700 border-zinc-300',
+  error: 'bg-red-100 text-red-700 border-red-300',
 };
 
 interface Props {
@@ -22,8 +22,8 @@ export function ConnectionPanel({ serial, packetCount }: Props) {
 
   if (!supported) {
     return (
-      <Card className="border-red-500/30 bg-red-500/10">
-        <CardContent className="pt-4 text-sm text-red-400">
+      <Card className="border-red-300/30 bg-red-100/50">
+        <CardContent className="pt-4 text-sm text-red-700">
           Web Serial API not supported. Use Chrome or Edge with HTTPS.
         </CardContent>
       </Card>
@@ -31,9 +31,9 @@ export function ConnectionPanel({ serial, packetCount }: Props) {
   }
 
   return (
-    <Card className="bg-zinc-900 border-zinc-800">
+    <Card className="bg-white border-zinc-200">
       <CardHeader className="pb-3">
-        <CardTitle className="text-sm font-semibold uppercase tracking-widest text-zinc-400 flex items-center gap-2">
+        <CardTitle className="text-sm font-semibold uppercase tracking-widest text-zinc-600 flex items-center gap-2">
           <Bluetooth size={14} />
           Connection
         </CardTitle>
@@ -45,7 +45,7 @@ export function ConnectionPanel({ serial, packetCount }: Props) {
             {status.toUpperCase()}
           </span>
           {status === 'connected' && (
-            <span className="text-xs text-zinc-500 font-mono">{packetCount} packets</span>
+            <span className="text-xs text-zinc-600 font-mono">{packetCount} packets</span>
           )}
         </div>
 
@@ -62,7 +62,7 @@ export function ConnectionPanel({ serial, packetCount }: Props) {
               Disconnect
             </Button>
           )}
-          <Button onClick={refreshPairedPorts} size="sm" variant="outline" className="w-full border-zinc-700 text-zinc-400 hover:text-zinc-100">
+          <Button onClick={refreshPairedPorts} size="sm" variant="outline" className="w-full border-zinc-300 text-zinc-600 hover:text-zinc-900">
             <RefreshCw size={12} className="mr-1.5" />
             Refresh Paired
           </Button>

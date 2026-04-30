@@ -11,16 +11,16 @@ interface Props {
 
 function bpmColor(bpm: number) {
   if (bpm === 0) return 'text-zinc-500';
-  if (bpm < BPM_LOW || bpm > BPM_HIGH) return 'text-red-400';
-  if (bpm > 120) return 'text-orange-400';
-  return 'text-emerald-400';
+  if (bpm < BPM_LOW || bpm > BPM_HIGH) return 'text-red-600';
+  if (bpm > 120) return 'text-orange-600';
+  return 'text-emerald-600';
 }
 
 function spo2Color(spo2: number) {
   if (spo2 === 0) return 'text-zinc-500';
-  if (spo2 < SPO2_LOW) return 'text-red-400';
-  if (spo2 < 97) return 'text-yellow-400';
-  return 'text-emerald-400';
+  if (spo2 < SPO2_LOW) return 'text-red-600';
+  if (spo2 < 97) return 'text-yellow-600';
+  return 'text-emerald-600';
 }
 
 export function HealthCard({ latest }: Props) {
@@ -28,9 +28,9 @@ export function HealthCard({ latest }: Props) {
   const spo2 = latest?.spo2 ?? 0;
 
   return (
-    <Card className="bg-zinc-900 border-zinc-800">
+    <Card className="bg-white border-zinc-200">
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-semibold uppercase tracking-widest text-zinc-400 flex items-center gap-2">
+        <CardTitle className="text-sm font-semibold uppercase tracking-widest text-zinc-600 flex items-center gap-2">
           <Heart size={14} />
           Health Metrics
         </CardTitle>
@@ -41,7 +41,7 @@ export function HealthCard({ latest }: Props) {
           <p className={cn('text-4xl font-bold font-mono tabular-nums', bpmColor(bpm))}>
             {bpm === 0 ? '—' : bpm}
           </p>
-          <p className="text-[11px] text-zinc-500 uppercase tracking-wider">BPM</p>
+          <p className="text-[11px] text-zinc-600 uppercase tracking-wider">BPM</p>
           <p className={cn('text-[10px]', bpmColor(bpm))}>
             {bpm === 0 ? 'No signal' : bpm < BPM_LOW ? 'Low' : bpm > BPM_HIGH ? 'High' : 'Normal'}
           </p>
@@ -52,7 +52,7 @@ export function HealthCard({ latest }: Props) {
           <p className={cn('text-4xl font-bold font-mono tabular-nums', spo2Color(spo2))}>
             {spo2 === 0 ? '—' : `${spo2}%`}
           </p>
-          <p className="text-[11px] text-zinc-500 uppercase tracking-wider">SpO₂</p>
+          <p className="text-[11px] text-zinc-600 uppercase tracking-wider">SpO₂</p>
           <p className={cn('text-[10px]', spo2Color(spo2))}>
             {spo2 === 0 ? 'No signal' : spo2 < SPO2_LOW ? 'Low — seek care' : 'Normal'}
           </p>
