@@ -22,7 +22,7 @@ export function HRZoneGauge({ bpm, maxHR }: Props) {
 
   return (
     <div className="flex flex-col h-full p-4 lg:p-6">
-      <p className="text-[11px] uppercase tracking-widest font-semibold text-zinc-500">Heart Rate</p>
+      <p className="text-[11px] uppercase tracking-widest font-semibold text-zinc-600">Heart Rate</p>
 
       <div className="flex-1 flex flex-col items-center justify-center -mt-2">
         <GaugeComponent
@@ -44,18 +44,18 @@ export function HRZoneGauge({ bpm, maxHR }: Props) {
             ],
           }}
           pointer={{
-            color: '#ffffff',
+            color: '#18181b',
             length: 0.72,
             width: 12,
             elastic: true,
           }}
           labels={{
             valueLabel: {
-              formatTextValue: () => bpm > 0 ? `${bpm}` : '—',
+              formatTextValue: () => '',
               style: {
-                fill: bpm > 0 ? zone.color : '#52525b',
-                fontSize: '38px',
-                fontWeight: '900',
+                fill: 'transparent',
+                fontSize: '1px',
+                fontWeight: '400',
                 textShadow: 'none',
               },
             },
@@ -63,7 +63,7 @@ export function HRZoneGauge({ bpm, maxHR }: Props) {
               type: 'outer',
               defaultTickValueConfig: {
                 formatTextValue: (v: number) => String(Math.round(v)),
-                style: { fontSize: '9px', fill: '#52525b' },
+                style: { fontSize: '9px', fill: '#71717a' },
               },
               ticks: [
                 { value: Math.round(max * 0.50) },
@@ -76,9 +76,16 @@ export function HRZoneGauge({ bpm, maxHR }: Props) {
           style={{ width: '100%', maxWidth: 260 }}
         />
 
+        <p
+          className="text-5xl lg:text-6xl font-black tabular-nums leading-none mt-1"
+          style={{ color: bpm > 0 ? zone.color : '#a1a1aa' }}
+        >
+          {bpm > 0 ? bpm : '—'}
+        </p>
+
         {bpm > 0 && (
           <p
-            className="text-[11px] font-semibold -mt-4 tabular-nums"
+            className="text-[11px] font-semibold mt-1 tabular-nums"
             style={{ color: zone.color }}
           >
             {zone.name} · {pct.toFixed(0)}% max HR
